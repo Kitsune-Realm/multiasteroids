@@ -19,6 +19,10 @@ namespace MultiAsteroids
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        SpriteFont font;
+
+        Starship player1;
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -34,8 +38,17 @@ namespace MultiAsteroids
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            font = Content.Load<SpriteFont>("displayFont");
+            player1 = new Starship("USS Avenger");
+            player1.PositionChanged += new EventHandler(player1_PositionChanged);
+
 
             base.Initialize();
+        }
+
+        void player1_PositionChanged(object sender, EventArgs e)
+        {
+            player1.UpdatePosition();
         }
 
         /// <summary>
@@ -46,8 +59,8 @@ namespace MultiAsteroids
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // TODO: use this.Content to load your game content here
+            player1.ShipTexture = Content.Load<Texture2D>("ship_texture_breen");
+            player1.Origin = new Vector2(player1.ShipTexture.Width / 2, player1.ShipTexture.Height / 2);
         }
 
         /// <summary>
@@ -70,7 +83,11 @@ namespace MultiAsteroids
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            // TODO: Add your update logic here
+            player1.MovementReset();
+            determineKeyboardMovement();
+            player1.MovementUpdate();
+
+            Console.WriteLine("X:{0} Y:{1} R:{2}", player1.X, player1.Y, player1.RotationAngle);
 
             base.Update(gameTime);
         }
@@ -81,11 +98,28 @@ namespace MultiAsteroids
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.Black);
 
-            // TODO: Add your drawing code here
+            spriteBatch.Begin();
+
+            spriteBatch.DrawString(font, player1.Name, new Vector2(0,0), Color.White);            
+            spriteBatch.Draw(player1.ShipTexture, player1.Position, null, Color.White, player1.RotationAngle, player1.Origin, 1.0f, SpriteEffects.None, 0f);
+            spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+
+        private void determineKeyboardMovement()
+        {
+            KeyboardState state = Keyboard.GetState();
+            if (state.IsKeyDown(Keys.Up) && !state.IsKeyDown(Keys.Down))
+                player1.MoveForward = true;
+            if (state.IsKeyDown(Keys.Down) && !state.IsKeyDown(Keys.Up))
+                player1.MoveBackward = true;
+            if (state.IsKeyDown(Keys.Left) && !state.IsKeyDown(Keys.Right))
+                player1.MoveLeft = true;
+            if (state.IsKeyDown(Keys.Right) && !state.IsKeyDown(Keys.Left))
+                player1.MoveRight = true;            
         }
     }
 }
