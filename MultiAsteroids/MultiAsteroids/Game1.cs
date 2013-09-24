@@ -41,7 +41,7 @@ namespace MultiAsteroids
             // TODO: Add your initialization logic here
             font = Content.Load<SpriteFont>("displayFont");
 
-            player1 = new Starship("USS Avenger", this.Content);
+            player1 = new Starship("Chel Grett", this.Content);
             player1.PositionChanged += new EventHandler(player1_PositionChanged);
 
 
