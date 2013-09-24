@@ -18,6 +18,7 @@ namespace MultiAsteroids
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+        KeyboardState state;
 
         SpriteFont font;
 
@@ -39,7 +40,8 @@ namespace MultiAsteroids
         {
             // TODO: Add your initialization logic here
             font = Content.Load<SpriteFont>("displayFont");
-            player1 = new Starship("USS Avenger");
+
+            player1 = new Starship("USS Avenger", this.Content);
             player1.PositionChanged += new EventHandler(player1_PositionChanged);
 
 
@@ -59,8 +61,6 @@ namespace MultiAsteroids
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            player1.ShipTexture = Content.Load<Texture2D>("ship_texture_breen");
-            player1.Origin = new Vector2(player1.ShipTexture.Width / 2, player1.ShipTexture.Height / 2);
         }
 
         /// <summary>
@@ -84,10 +84,12 @@ namespace MultiAsteroids
                 this.Exit();
 
             player1.MovementReset();
-            determineKeyboardMovement();
+            determineKeyboardInput();
             player1.MovementUpdate();
 
-            Console.WriteLine("X:{0} Y:{1} R:{2}", player1.X, player1.Y, player1.RotationAngle);
+            updateProjectiles(gameTime);
+
+            //Console.WriteLine("X:{0} Y:{1} R:{2}", player1.X, player1.Y, player1.RotationAngle);
 
             base.Update(gameTime);
         }
@@ -102,6 +104,14 @@ namespace MultiAsteroids
 
             spriteBatch.Begin();
 
+            foreach (Projectile projectile in player1.projectiles)
+            {
+                if (projectile.IsAlive)
+                {
+                    spriteBatch.Draw(projectile.Texture, new Rectangle((int)projectile.Position.X, (int)projectile.Position.Y, projectile.SpriteWidth, projectile.SpriteHeight), projectile.SpriteRectangle, Color.White, projectile.RotationAngle, projectile.Origin, SpriteEffects.None, 0f);
+                }
+            }
+
             spriteBatch.DrawString(font, player1.Name, new Vector2(0,0), Color.White);            
             spriteBatch.Draw(player1.ShipTexture, player1.Position, null, Color.White, player1.RotationAngle, player1.Origin, 1.0f, SpriteEffects.None, 0f);
             spriteBatch.End();
@@ -109,17 +119,61 @@ namespace MultiAsteroids
             base.Draw(gameTime);
         }
 
-        private void determineKeyboardMovement()
+        private void determineKeyboardInput()
         {
-            KeyboardState state = Keyboard.GetState();
-            if (state.IsKeyDown(Keys.Up) && !state.IsKeyDown(Keys.Down))
+            state = Keyboard.GetState();
+            if (state.IsKeyDown(Keys.Space))
+                fireProjectile();
+            // Up, Left and Space causes bug, Space wont work then...
+            if (state.IsKeyDown(Keys.W))
                 player1.MoveForward = true;
-            if (state.IsKeyDown(Keys.Down) && !state.IsKeyDown(Keys.Up))
+            if (state.IsKeyDown(Keys.S))
                 player1.MoveBackward = true;
-            if (state.IsKeyDown(Keys.Left) && !state.IsKeyDown(Keys.Right))
+            if (state.IsKeyDown(Keys.A))
                 player1.MoveLeft = true;
-            if (state.IsKeyDown(Keys.Right) && !state.IsKeyDown(Keys.Left))
-                player1.MoveRight = true;            
+            if (state.IsKeyDown(Keys.D))
+                player1.MoveRight = true;                            
+        }
+
+        private void updateProjectiles(GameTime gameTime)
+        {
+            foreach (Projectile projectile in player1.projectiles)
+            {
+                if (projectile.IsAlive)
+                {
+                    projectile.Timer += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+                    if (projectile.Timer >= projectile.Interval)
+                    {
+                        projectile.Timer = 0;
+                        projectile.CurrentFrame++;
+                        projectile.CurrentFrame %= projectile.AmountImages;
+                    }
+                    projectile.SpriteRectangle.X = projectile.CurrentFrame * projectile.SpriteWidth;
+
+                    float x = (float)(Math.Sin(projectile.RotationAngle) * projectile.Velocity);
+                    float y = (float)(Math.Cos(projectile.RotationAngle) * projectile.Velocity);
+                    projectile.UpdatePosition(x, y);
+                    //Console.WriteLine("X:{0} Y:{1} R:{2}", projectile.Position.X, projectile.Position.Y, projectile.RotationAngle);
+
+                    if (projectile.Position.X < 0 || projectile.Position.X > GraphicsDevice.Viewport.Width || projectile.Position.Y < 0 || projectile.Position.Y > GraphicsDevice.Viewport.Height)
+                        projectile.IsAlive = false;
+                }
+            }
+        }
+
+        private void fireProjectile()
+        {
+            foreach (Projectile projectile in player1.projectiles)
+            {
+                if (!projectile.IsAlive)
+                {
+                    projectile.soundEffect.Play();
+                    projectile.IsAlive = true;
+                    projectile.RotationAngle = player1.RotationAngle;
+                    projectile.Position = player1.Position;
+                    break;
+                }                    
+            }
         }
     }
 }

@@ -21,6 +21,7 @@ namespace MultiAsteroids
         public string Name { get; private set; }
         public Vector2 Position { get; set; }
         public Texture2D ShipTexture { get; set; }
+        public bool IsAlive { get; set; }
         public bool MoveForward { get; set; }
         public bool MoveBackward { get; set; }
         public bool MoveLeft { get; set; }
@@ -29,11 +30,14 @@ namespace MultiAsteroids
         public Vector2 Origin { get; set; }
         public float Velocity { get; set; }
         public float BackVelocity { get; set; }
+        public Projectile[] projectiles;
 
         public event EventHandler PositionChanged;
 
-        public Starship(string name)
+        public Starship(string name, ContentManager content)
         {
+            this.projectiles = new Projectile[100];
+            fillProjectiles(content);
             this.x = 0;
             this.y = 0;
             this.Name = name;
@@ -43,13 +47,16 @@ namespace MultiAsteroids
             this.Velocity = 5;
             this.BackVelocity = 2;
             this.PositionChanged += new EventHandler(Starship_PositionChanged);
+            this.IsAlive = true;            
+
+            this.ShipTexture = content.Load<Texture2D>("ship_texture_breen");
+            this.Origin = new Vector2(this.ShipTexture.Width / 2, this.ShipTexture.Height / 2);
         }
 
         void Starship_PositionChanged(object sender, EventArgs e)
         {
             UpdatePosition(); // looks lumpy cannot put above in constructor???
         }
-
 
         public void UpdatePosition()
         {
@@ -92,6 +99,14 @@ namespace MultiAsteroids
         public void MovementReset()
         {
             MoveForward = MoveBackward = MoveLeft = MoveRight = false;
+        }
+
+        private void fillProjectiles(ContentManager content)
+        {
+            for (int i = 0; i < projectiles.Length; i++)
+            {
+                projectiles[i] = new Projectile(content);
+            }
         }
     }
 }
