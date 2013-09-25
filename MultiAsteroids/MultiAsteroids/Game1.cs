@@ -112,7 +112,8 @@ namespace MultiAsteroids
                 }
             }
 
-            spriteBatch.DrawString(font, player1.Name, new Vector2(0,0), Color.White);            
+            drawStatistics();
+
             spriteBatch.Draw(player1.ShipTexture, player1.Position, null, Color.White, player1.RotationAngle, player1.Origin, 1.0f, SpriteEffects.None, 0f);
             spriteBatch.End();
 
@@ -174,6 +175,13 @@ namespace MultiAsteroids
                     break;
                 }                    
             }
+        }
+
+        private void drawStatistics()
+        {
+            spriteBatch.DrawString(font, player1.Name, new Vector2(0, 0), Color.White);
+            spriteBatch.DrawString(font, "X: " + player1.X + " Y: "+ player1.Y, new Vector2(0, 11), Color.White);
+            spriteBatch.DrawString(font, "Angle: " + player1.RotationAngle, new Vector2(0, 22), Color.White);
         }
     }
 }
