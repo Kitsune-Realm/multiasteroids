@@ -41,8 +41,7 @@ namespace MultiAsteroids
             // TODO: Add your initialization logic here
             font = Content.Load<SpriteFont>("displayFont");
 
-            player1 = new Starship("Chel Grett", this.Content);
-            player1.PositionChanged += new EventHandler(player1_PositionChanged);
+            
 
             ClientComm clientComm = new ClientComm();
             clientComm.createNetwork();
@@ -63,6 +62,14 @@ namespace MultiAsteroids
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
+        }
+
+        public void LoadGame()
+        {
+            spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            player1 = new Starship("Chel Grett", this.Content);
+            player1.PositionChanged += new EventHandler(player1_PositionChanged);
         }
 
         /// <summary>
