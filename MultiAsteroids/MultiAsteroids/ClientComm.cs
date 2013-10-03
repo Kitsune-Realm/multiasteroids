@@ -11,12 +11,27 @@ namespace MultiAsteroids
     class ClientComm
     {
         public int Port = 6000;
+        public TcpClient client;
 
-        public void createNetwork()
+        public ClientComm()
         {
-            TcpClient client = new TcpClient(generateIP(), Port);
+            client = new TcpClient("127.0.0.1", Port);
         }
 
+        public void Send(float x, float y)
+        {
+            List<byte> data = new List<byte>();
+
+            //foreach (byte b in BitConverter.GetBytes(x))            
+            //    data.Add(b);
+            //foreach (byte b in BitConverter.GetBytes(y))
+            //    data.Add(b);
+
+
+            this.client.GetStream().Write(data.ToArray(), 0, data.Count);
+        }
+
+        [Obsolete]
         private string generateIP()
         {
             IPHostEntry host;
@@ -30,6 +45,6 @@ namespace MultiAsteroids
                 }
             }
             return localIP;
-        }
+        }       
     }
 }

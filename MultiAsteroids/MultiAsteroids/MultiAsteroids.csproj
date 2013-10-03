@@ -123,6 +123,10 @@
     <Content Include="GameThumbnail.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\AsteroidLibrary\AsteroidLibrary.csproj">
+      <Project>{725337D2-8C48-405D-BFA0-6FC74292A0C6}</Project>
+      <Name>AsteroidLibrary</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MultiAsteroidsContent\MultiAsteroidsContent.contentproj">
       <Name>MultiAsteroidsContent</Name>
       <XnaReferenceType>Content</XnaReferenceType>
