@@ -11,6 +11,7 @@ namespace ServerMA
     class Program
     {
         private static int port = 6000;
+        private 
 
         static void Main(string[] args)
         {
