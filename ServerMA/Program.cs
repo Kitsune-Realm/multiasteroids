@@ -11,17 +11,22 @@ namespace ServerMA
     class Program
     {
         private static int port = 6000;
-        private 
+        private List<StarshipClient> clients;
+        private int clientId;
 
         static void Main(string[] args)
         {
             Program program = new Program();
-            program.run();           
+            program.run();
+            
         }
 
         private void run()
         {
             Console.WriteLine("Server for MultiAsteroids game");
+            this.clients = new List<StarshipClient>();
+            this.clientId = 1;
+
             IPAddress ip;
             if (!IPAddress.TryParse("0.0.0.0", out ip))
                 writeError("cannot parse this IP");
@@ -38,8 +43,8 @@ namespace ServerMA
             while (true)
             {
                 TcpClient client = listener.AcceptTcpClient();
-                Thread thread = new Thread(() => handleClientThread(client));
-                thread.Start();
+                Thread thread = new Thread(() => handleClientThread(client));                
+                thread.Start();                
             }
         }
 
@@ -49,8 +54,10 @@ namespace ServerMA
             bool done = false;
             Console.WriteLine("New Client accepted : " + ((IPEndPoint)client.Client.RemoteEndPoint).Address);
             //string[] clientData = ReadMessage(client);
-
-            while (done)
+            this.clients.Add(new StarshipClient(clientId));
+            this.clientId++;
+            
+            while (!done)
             {
 
             }

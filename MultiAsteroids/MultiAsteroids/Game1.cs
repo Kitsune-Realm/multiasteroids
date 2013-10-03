@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using AsteroidLibrary;
 
 namespace MultiAsteroids
 {
@@ -21,7 +22,7 @@ namespace MultiAsteroids
         KeyboardState state;
 
         SpriteFont font;
-
+        
         Starship player1;
 
         public Game1()
@@ -39,12 +40,9 @@ namespace MultiAsteroids
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            font = Content.Load<SpriteFont>("displayFont");
+            font = Content.Load<SpriteFont>("displayFont");              
 
-            
-
-            ClientComm clientComm = new ClientComm();
-            clientComm.createNetwork();
+            LoadGame();
 
             base.Initialize();
         }
@@ -95,6 +93,10 @@ namespace MultiAsteroids
             player1.MovementReset();
             determineKeyboardInput();
             player1.MovementUpdate();
+            
+            player1.clientComm.Send(player1.X, player1.Y);
+
+            
 
             updateProjectiles(gameTime);
 
@@ -190,7 +192,7 @@ namespace MultiAsteroids
         {
             spriteBatch.DrawString(font, player1.Name, new Vector2(0, 0), Color.White);
             spriteBatch.DrawString(font, "X: " + player1.X + " Y: "+ player1.Y, new Vector2(0, 11), Color.White);
-            spriteBatch.DrawString(font, "Angle: " + player1.RotationAngle, new Vector2(0, 22), Color.White);
+            spriteBatch.DrawString(font, "Angle: " + player1.RotationAngle, new Vector2(0, 22), Color.White);            
         }
     }
 }

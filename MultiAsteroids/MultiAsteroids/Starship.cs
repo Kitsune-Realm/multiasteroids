@@ -31,6 +31,7 @@ namespace MultiAsteroids
         public float Velocity { get; set; }
         public float BackVelocity { get; set; }
         public Projectile[] projectiles;
+        public ClientComm clientComm { get; set; }
 
         public event EventHandler PositionChanged;
 
@@ -47,7 +48,8 @@ namespace MultiAsteroids
             this.Velocity = 5;
             this.BackVelocity = 2;
             this.PositionChanged += new EventHandler(Starship_PositionChanged);
-            this.IsAlive = true;            
+            this.IsAlive = true;
+            this.clientComm = new ClientComm();
 
             this.ShipTexture = content.Load<Texture2D>("ship_texture_breen");
             this.Origin = new Vector2(this.ShipTexture.Width / 2, this.ShipTexture.Height / 2);
