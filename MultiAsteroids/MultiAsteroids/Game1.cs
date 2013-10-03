@@ -69,6 +69,7 @@ namespace MultiAsteroids
 
             player1 = new Starship("Chel Grett", this.Content);            
             player1.PositionChanged += new EventHandler(player1_PositionChanged);
+            otherPlayers.Add(new StarshipClientData(2));
         }
 
         /// <summary>
