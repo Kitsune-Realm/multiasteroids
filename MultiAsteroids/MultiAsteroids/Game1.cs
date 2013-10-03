@@ -98,20 +98,21 @@ namespace MultiAsteroids
             player1.clientComm.Send(player1.X, player1.Y, player1.RotationAngle);           
             
             byte[] buffer = player1.clientComm.Read();
+            if (buffer != null)
+            {
+                byte[] xAs = new byte[4];
+                byte[] yAs = new byte[4];
+                byte[] rot = new byte[4];
 
-            byte[] xAs = new byte[4];
-            byte[] yAs = new byte[4];
-            byte[] rot = new byte[4];
+                for (int i = 1; i < 5; i++)
+                    xAs[(i - 1)] = buffer[i];
+                for (int i = 5; i < 9; i++)
+                    yAs[i % 5] = buffer[i];
+                for (int i = 9; i < 13; i++)
+                    rot[i % 9] = buffer[i];
 
-            for (int i = 1; i < 5; i++)
-                xAs[(i-1)] = buffer[i];
-            for (int i = 5; i < 9; i++)
-                yAs[i % 5] = buffer[i];
-            for (int i = 9; i < 13; i++)
-                rot[i % 9] = buffer[i];
-
-            otherPlayers[0].Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
-
+                otherPlayers[0].Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
+            }
             updateProjectiles(gameTime);
 
             //Console.WriteLine("X:{0} Y:{1} R:{2}", player1.X, player1.Y, player1.RotationAngle);
