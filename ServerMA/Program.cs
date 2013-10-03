@@ -5,13 +5,14 @@ using System.Text;
 using System.Net.Sockets;
 using System.Threading;
 using System.Net;
+using AsteroidLibrary;
 
 namespace ServerMA
 {
     class Program
     {
         private static int port = 6000;
-        private List<StarshipClient> clients;
+        private Dictionary<TcpClient, StarshipClientData> clients;
         private int clientId;
 
         static void Main(string[] args)
@@ -24,18 +25,12 @@ namespace ServerMA
         private void run()
         {
             Console.WriteLine("Server for MultiAsteroids game");
-            this.clients = new List<StarshipClient>();
+            this.clients = new Dictionary<TcpClient, StarshipClientData>();
             this.clientId = 1;
 
             IPAddress ip;
             if (!IPAddress.TryParse("0.0.0.0", out ip))
                 writeError("cannot parse this IP");
-
-
-            byte[] test = new byte[2];
-            test[0] = 8;
-            test[1] = 50;
-            decodeBytes(test);
 
             TcpListener listener = new TcpListener(ip, port);
             listener.Start();
@@ -52,15 +47,36 @@ namespace ServerMA
         {
             TcpClient client = obj as TcpClient;
             bool done = false;
-            Console.WriteLine("New Client accepted : " + ((IPEndPoint)client.Client.RemoteEndPoint).Address);
-            //string[] clientData = ReadMessage(client);
-            this.clients.Add(new StarshipClient(clientId));
-            this.clientId++;
-            
+            Console.WriteLine("New Client accepted : " + ((IPEndPoint)client.Client.RemoteEndPoint).Address);           
+            this.clients.Add(client, new StarshipClientData(clientId));
+            this.clientId++;            
+
             while (!done)
             {
-
+                ReadMessage(client);
             }
+        }
+
+        private void ReadMessage(TcpClient client)
+        {
+            byte[] buffer = new byte[12];
+            client.GetStream().Read(buffer, 0, buffer.Length);
+
+            byte[] xAs = new byte[4];
+            byte[] yAs = new byte[4];
+            byte[] rot = new byte[4];
+
+            for(int i=0; i<4; i++)      
+                 xAs[i] = buffer[i];
+            for (int i = 4; i < 8; i++)
+                yAs[i % 4] = buffer[i];
+            for (int i = 8; i < 12; i++)
+                rot[i % 8] = buffer[i];
+
+            clients[client].Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
+
+            foreach(KeyValuePair<TcpClient, StarshipClientData> entry in clients)            
+                Console.WriteLine(string.Format("{0}, X:{1} Y:{2}", entry.Value.id, entry.Value.x, entry.Value.y));
         }
 
         private void writeError(string description)
@@ -68,28 +84,6 @@ namespace ServerMA
             Console.WriteLine("ERROR: " + description);
             Console.ReadKey();
             Environment.Exit(0);
-        }
-
-        private void ReadMessage(TcpClient client)
-        {
-            byte[] buffer = new byte[256];
-            int totalRead = 0;
-
-            do
-            {
-                int read = client.GetStream().Read(buffer, totalRead, buffer.Length - totalRead);
-                totalRead += read;
-            } while (client.GetStream().DataAvailable);
-
-            //return decodeBytes(buffer);
-        }
-
-        private void decodeBytes(byte[] input)
-        {
-            for (int i = 0; i < input.Length; i++)
-            {
-                Console.WriteLine("byte " + i + ": " + Convert.ToString(input[i], 2));
-            }            
         }
     }
 }
