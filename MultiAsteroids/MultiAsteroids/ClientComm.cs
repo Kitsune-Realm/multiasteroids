@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Net;
 using AsteroidLibrary;
+using System.IO;
 
 namespace MultiAsteroids
 {
@@ -17,6 +18,7 @@ namespace MultiAsteroids
         public ClientComm()
         {
             client = new TcpClient("127.0.0.1", Port);
+            client.ReceiveTimeout = 1;
         }
 
         public void Send(float x, float y, float rotation)
@@ -36,8 +38,14 @@ namespace MultiAsteroids
         public byte[] Read()
         {
             byte[] buffer = new byte[13];
-            client.GetStream().Read(buffer, 0, buffer.Length);
-
+            try
+            {
+                client.GetStream().Read(buffer, 0, buffer.Length);
+            }
+            catch (IOException e)
+            {
+                return null;
+            }
             return buffer;
         }
 

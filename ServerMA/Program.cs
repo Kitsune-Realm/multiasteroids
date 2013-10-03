@@ -46,8 +46,9 @@ namespace ServerMA
         {
             TcpClient client = obj as TcpClient;
             bool done = false;
-            Console.WriteLine("New Client accepted : " + ((IPEndPoint)client.Client.RemoteEndPoint).Address);           
             this.clients.Add(client, new StarshipClientData(clientId));
+            Console.WriteLine("New Client accepted : " + ((IPEndPoint)client.Client.RemoteEndPoint).Address);           
+
             this.clientId++;            
 
             while (!done)

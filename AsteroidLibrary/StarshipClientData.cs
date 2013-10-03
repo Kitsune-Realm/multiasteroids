@@ -11,6 +11,7 @@ namespace AsteroidLibrary
         public float Y { get; set; }
         public float Rotation { get; set; }
         public int ID { get; set; }
+      
 
         public StarshipClientData(int id)
         {
@@ -22,6 +23,6 @@ namespace AsteroidLibrary
             this.X = x;
             this.Y = y;
             this.Rotation = rotation;
-        }        
+        }
     }
 }
