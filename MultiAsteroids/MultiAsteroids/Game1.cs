@@ -43,7 +43,6 @@ namespace MultiAsteroids
             // TODO: Add your initialization logic here
             font = Content.Load<SpriteFont>("displayFont");
 
-            otherPlayers.Add(new StarshipClientData(2));
             LoadGame();
 
             base.Initialize();
