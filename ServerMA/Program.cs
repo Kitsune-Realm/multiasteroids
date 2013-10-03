@@ -12,7 +12,7 @@ namespace ServerMA
     class Program
     {
         private static int port = 6000;
-        private List<StarshipClient> clients;
+        private Dictionary<TcpClient, StarshipClientData> clients;
         private int clientId;
 
         static void Main(string[] args)
@@ -25,7 +25,7 @@ namespace ServerMA
         private void run()
         {
             Console.WriteLine("Server for MultiAsteroids game");
-            this.clients = new List<StarshipClient>();
+            this.clients = new Dictionary<TcpClient, StarshipClientData>();
             this.clientId = 1;
 
             IPAddress ip;
@@ -47,11 +47,9 @@ namespace ServerMA
         {
             TcpClient client = obj as TcpClient;
             bool done = false;
-            Console.WriteLine("New Client accepted : " + ((IPEndPoint)client.Client.RemoteEndPoint).Address);
-            //string[] clientData = ReadMessage(client);
-            this.clients.Add(new StarshipClient(clientId));
-            this.clientId++;
-            
+            Console.WriteLine("New Client accepted : " + ((IPEndPoint)client.Client.RemoteEndPoint).Address);           
+            this.clients.Add(client, new StarshipClientData(clientId));
+            this.clientId++;            
 
             while (!done)
             {
@@ -75,7 +73,10 @@ namespace ServerMA
             for (int i = 8; i < 12; i++)
                 rot[i % 8] = buffer[i];
 
-            Console.WriteLine("X:" + FloatUnion.BytesToFloat(xAs) + " Y:" + FloatUnion.BytesToFloat(yAs) + " R:" + FloatUnion.BytesToFloat(rot));
+            clients[client].Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
+
+            foreach(KeyValuePair<TcpClient, StarshipClientData> entry in clients)            
+                Console.WriteLine(string.Format("{0}, X:{1} Y:{2}", entry.Value.id, entry.Value.x, entry.Value.y));
         }
 
         private void writeError(string description)
