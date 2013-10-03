@@ -24,6 +24,7 @@ namespace MultiAsteroids
         SpriteFont font;
         
         Starship player1;
+        Starship player2;
 
         public Game1()
         {
@@ -67,6 +68,7 @@ namespace MultiAsteroids
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             player1 = new Starship("Chel Grett", this.Content);
+            player2 = new Starship("Flying Dutchman", this.Content);
             player1.PositionChanged += new EventHandler(player1_PositionChanged);
         }
 
@@ -94,7 +96,22 @@ namespace MultiAsteroids
             determineKeyboardInput();
             player1.MovementUpdate();
 
-            player1.clientComm.Send(player1.X, player1.Y, player1.RotationAngle);
+            player1.clientComm.Send(player1.X, player1.Y, player1.RotationAngle);           
+            
+            byte[] buffer = player1.clientComm.Read();
+
+            byte[] xAs = new byte[4];
+            byte[] yAs = new byte[4];
+            byte[] rot = new byte[4];
+
+            for (int i = 1; i < 5; i++)
+                xAs[(i-1)] = buffer[i];
+            for (int i = 5; i < 9; i++)
+                yAs[i % 5] = buffer[i];
+            for (int i = 9; i < 13; i++)
+                rot[i % 9] = buffer[i];
+
+            player2.UpdatePosition(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
 
             updateProjectiles(gameTime);
 
@@ -190,7 +207,11 @@ namespace MultiAsteroids
         {
             spriteBatch.DrawString(font, player1.Name, new Vector2(0, 0), Color.White);
             spriteBatch.DrawString(font, "X: " + player1.X + " Y: "+ player1.Y, new Vector2(0, 11), Color.White);
-            spriteBatch.DrawString(font, "Angle: " + player1.RotationAngle, new Vector2(0, 22), Color.White);            
+            spriteBatch.DrawString(font, "Angle: " + player1.RotationAngle, new Vector2(0, 22), Color.White);
+
+            spriteBatch.DrawString(font, player2.Name, new Vector2(0, 55), Color.White);
+            spriteBatch.DrawString(font, "X: " + player2.X + " Y: " + player2.Y, new Vector2(0, 66), Color.White);
+            spriteBatch.DrawString(font, "Angle: " + player2.RotationAngle, new Vector2(0, 77), Color.White); 
         }
     }
 }
