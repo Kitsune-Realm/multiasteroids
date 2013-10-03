@@ -5,6 +5,7 @@ using System.Text;
 using System.Net.Sockets;
 using System.Threading;
 using System.Net;
+using AsteroidLibrary;
 
 namespace MultiAsteroids
 {
@@ -18,15 +19,16 @@ namespace MultiAsteroids
             client = new TcpClient("127.0.0.1", Port);
         }
 
-        public void Send(float x, float y)
+        public void Send(float x, float y, float rotation)
         {
             List<byte> data = new List<byte>();
 
-            //foreach (byte b in BitConverter.GetBytes(x))            
-            //    data.Add(b);
-            //foreach (byte b in BitConverter.GetBytes(y))
-            //    data.Add(b);
-
+            foreach (byte b in FloatUnion.FloatToBytes(x))
+                data.Add(b);
+            foreach (byte b in FloatUnion.FloatToBytes(y))
+                data.Add(b);
+            foreach (byte b in FloatUnion.FloatToBytes(rotation))
+                data.Add(b);
 
             this.client.GetStream().Write(data.ToArray(), 0, data.Count);
         }

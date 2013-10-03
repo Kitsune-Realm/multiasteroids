@@ -93,10 +93,8 @@ namespace MultiAsteroids
             player1.MovementReset();
             determineKeyboardInput();
             player1.MovementUpdate();
-            
-            player1.clientComm.Send(player1.X, player1.Y);
 
-            
+            player1.clientComm.Send(player1.X, player1.Y, player1.RotationAngle);
 
             updateProjectiles(gameTime);
 
