@@ -18,8 +18,7 @@ namespace ServerMA
         static void Main(string[] args)
         {
             Program program = new Program();
-            program.run();
-            
+            program.run();            
         }
 
         private void run()
@@ -75,8 +74,28 @@ namespace ServerMA
 
             clients[client].Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
 
-            foreach(KeyValuePair<TcpClient, StarshipClientData> entry in clients)            
-                Console.WriteLine(string.Format("{0}, X:{1} Y:{2}", entry.Value.id, entry.Value.x, entry.Value.y));
+            writeMessage(client);
+        }
+
+        private void writeMessage(TcpClient client)
+        {
+            foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clients)
+            {
+                if (!entry.Key.Equals(client))
+                {
+                    List<byte> data = new List<byte>();
+                    data.Add((byte)entry.Value.id);
+                    foreach (byte b in FloatUnion.FloatToBytes(entry.Value.x))
+                        data.Add(b);
+                    foreach (byte b in FloatUnion.FloatToBytes(entry.Value.y))
+                        data.Add(b);
+                    foreach (byte b in FloatUnion.FloatToBytes(entry.Value.rotation))
+                        data.Add(b);
+
+                    client.GetStream().Write(data.ToArray(), 0, data.Count);
+                    Console.WriteLine(string.Format("{0}, X:{1} Y:{2}", entry.Value.id, entry.Value.x, entry.Value.y));
+                }
+            }                
         }
 
         private void writeError(string description)

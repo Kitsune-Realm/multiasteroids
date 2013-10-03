@@ -21,7 +21,7 @@ namespace MultiAsteroids
 
         public void Send(float x, float y, float rotation)
         {
-            List<byte> data = new List<byte>();
+            List<byte> data = new List<byte>();          
 
             foreach (byte b in FloatUnion.FloatToBytes(x))
                 data.Add(b);
@@ -30,8 +30,18 @@ namespace MultiAsteroids
             foreach (byte b in FloatUnion.FloatToBytes(rotation))
                 data.Add(b);
 
-            this.client.GetStream().Write(data.ToArray(), 0, data.Count);
+            this.client.GetStream().Write(data.ToArray(), 0, data.Count);           
         }
+
+        public byte[] Read()
+        {
+            byte[] buffer = new byte[13];
+            client.GetStream().Read(buffer, 0, buffer.Length);
+
+            return buffer;
+        }
+
+
 
         [Obsolete]
         private string generateIP()
