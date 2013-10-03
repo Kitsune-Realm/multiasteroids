@@ -84,16 +84,16 @@ namespace ServerMA
                 if (!entry.Key.Equals(client))
                 {
                     List<byte> data = new List<byte>();
-                    data.Add((byte)entry.Value.id);
-                    foreach (byte b in FloatUnion.FloatToBytes(entry.Value.x))
+                    data.Add((byte)entry.Value.ID);
+                    foreach (byte b in FloatUnion.FloatToBytes(entry.Value.X))
                         data.Add(b);
-                    foreach (byte b in FloatUnion.FloatToBytes(entry.Value.y))
+                    foreach (byte b in FloatUnion.FloatToBytes(entry.Value.Y))
                         data.Add(b);
-                    foreach (byte b in FloatUnion.FloatToBytes(entry.Value.rotation))
+                    foreach (byte b in FloatUnion.FloatToBytes(entry.Value.Rotation))
                         data.Add(b);
 
                     client.GetStream().Write(data.ToArray(), 0, data.Count);
-                    Console.WriteLine(string.Format("{0}, X:{1} Y:{2}", entry.Value.id, entry.Value.x, entry.Value.y));
+                    Console.WriteLine(string.Format("{0}, X:{1} Y:{2}", entry.Value.ID, entry.Value.X, entry.Value.Y));
                 }
             }                
         }
