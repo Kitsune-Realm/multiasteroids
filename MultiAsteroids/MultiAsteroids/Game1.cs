@@ -24,7 +24,7 @@ namespace MultiAsteroids
 
         SpriteFont font;
         
-        Starship player1;
+        Starship player;
 
         public Game1()
         {
@@ -50,7 +50,7 @@ namespace MultiAsteroids
 
         void player1_PositionChanged(object sender, EventArgs e)
         {
-            player1.UpdatePosition();
+            player.UpdatePosition();
         }
 
         /// <summary>
@@ -67,9 +67,8 @@ namespace MultiAsteroids
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            player1 = new Starship("Chel Grett", this.Content);            
-            player1.PositionChanged += new EventHandler(player1_PositionChanged);
-            otherPlayers.Add(new StarshipClientData(2));
+            player = new Starship("Chel Grett", this.Content);            
+            player.PositionChanged += new EventHandler(player1_PositionChanged);            
         }
 
         /// <summary>
@@ -92,28 +91,13 @@ namespace MultiAsteroids
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            player1.MovementReset();
+            player.MovementReset();
             determineKeyboardInput();
-            player1.MovementUpdate();
+            player.MovementUpdate();
+            player.Transmit();
 
-            player1.clientComm.Send(player1.X, player1.Y, player1.RotationAngle);           
+            readTransmitDataOtherPlayers();
             
-            byte[] buffer = player1.clientComm.Read();
-            if (buffer != null)
-            {
-                byte[] xAs = new byte[4];
-                byte[] yAs = new byte[4];
-                byte[] rot = new byte[4];
-
-                for (int i = 1; i < 5; i++)
-                    xAs[(i - 1)] = buffer[i];
-                for (int i = 5; i < 9; i++)
-                    yAs[i % 5] = buffer[i];
-                for (int i = 9; i < 13; i++)
-                    rot[i % 9] = buffer[i];
-
-                otherPlayers[0].Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
-            }
             updateProjectiles(gameTime);
 
             //Console.WriteLine("X:{0} Y:{1} R:{2}", player1.X, player1.Y, player1.RotationAngle);
@@ -131,7 +115,7 @@ namespace MultiAsteroids
 
             spriteBatch.Begin();
 
-            foreach (Projectile projectile in player1.projectiles)
+            foreach (Projectile projectile in player.projectiles)
             {
                 if (projectile.IsAlive)
                 {
@@ -141,7 +125,7 @@ namespace MultiAsteroids
 
             drawStatistics();
 
-            spriteBatch.Draw(player1.ShipTexture, player1.Position, null, Color.White, player1.RotationAngle, player1.Origin, 1.0f, SpriteEffects.None, 0f);
+            spriteBatch.Draw(player.ShipTexture, player.Position, null, Color.White, player.RotationAngle, player.Origin, 1.0f, SpriteEffects.None, 0f);
             spriteBatch.End();
 
             base.Draw(gameTime);
@@ -154,18 +138,18 @@ namespace MultiAsteroids
                 fireProjectile();
             // Up, Left and Space causes bug, Space wont work then...
             if (state.IsKeyDown(Keys.W))
-                player1.MoveForward = true;
+                player.MoveForward = true;
             if (state.IsKeyDown(Keys.S))
-                player1.MoveBackward = true;
+                player.MoveBackward = true;
             if (state.IsKeyDown(Keys.A))
-                player1.MoveLeft = true;
+                player.MoveLeft = true;
             if (state.IsKeyDown(Keys.D))
-                player1.MoveRight = true;                            
+                player.MoveRight = true;                            
         }
 
         private void updateProjectiles(GameTime gameTime)
         {
-            foreach (Projectile projectile in player1.projectiles)
+            foreach (Projectile projectile in player.projectiles)
             {
                 if (projectile.IsAlive)
                 {
@@ -191,14 +175,14 @@ namespace MultiAsteroids
 
         private void fireProjectile()
         {
-            foreach (Projectile projectile in player1.projectiles)
+            foreach (Projectile projectile in player.projectiles)
             {
                 if (!projectile.IsAlive)
                 {
                     projectile.soundEffect.Play();
                     projectile.IsAlive = true;
-                    projectile.RotationAngle = player1.RotationAngle;
-                    projectile.Position = player1.Position;
+                    projectile.RotationAngle = player.RotationAngle;
+                    projectile.Position = player.Position;
                     break;
                 }                    
             }
@@ -206,13 +190,50 @@ namespace MultiAsteroids
 
         private void drawStatistics()
         {
-            spriteBatch.DrawString(font, player1.Name, new Vector2(0, 0), Color.White);
-            spriteBatch.DrawString(font, "X: " + player1.X + " Y: "+ player1.Y, new Vector2(0, 11), Color.White);
-            spriteBatch.DrawString(font, "Angle: " + player1.RotationAngle, new Vector2(0, 22), Color.White);
+            spriteBatch.DrawString(font, player.Name, new Vector2(0, 0), Color.White);
+            spriteBatch.DrawString(font, "X: " + player.X + " Y: "+ player.Y, new Vector2(0, 11), Color.White);
+            spriteBatch.DrawString(font, "Angle: " + player.RotationAngle, new Vector2(0, 22), Color.White);
 
-            spriteBatch.DrawString(font, "Player 2", new Vector2(0, 55), Color.White);
-            spriteBatch.DrawString(font, "X: " + otherPlayers[0].X + " Y: " + otherPlayers[0].Y, new Vector2(0, 66), Color.White);
-            spriteBatch.DrawString(font, "Angle: " + otherPlayers[0].Rotation, new Vector2(0, 77), Color.White); 
+            int y = 44;
+            foreach (StarshipClientData scd in otherPlayers)
+            {              
+                spriteBatch.DrawString(font, "Player " + scd.ID, new Vector2(0, y), Color.White);
+                spriteBatch.DrawString(font, "X: " + scd.X + " Y: " + scd.Y, new Vector2(0, y + 11), Color.White);
+                spriteBatch.DrawString(font, "Angle: " + scd.Rotation, new Vector2(0, y + 22), Color.White);
+                y += 33;
+            }
+        }
+
+        private void readTransmitDataOtherPlayers()
+        {
+            byte[] buffer = player.clientComm.Read();
+            if (buffer != null)
+            {
+                if (buffer[0] == (int)MessageType.AddedClient)
+                {
+                    otherPlayers.Add(new StarshipClientData(buffer[1]));
+                }
+                else if (buffer[0] == (int)MessageType.Movement)
+                {
+                    byte[] xAs = new byte[4];
+                    byte[] yAs = new byte[4];
+                    byte[] rot = new byte[4];
+                    byte playerId = buffer[1];
+
+                    for (int i = 2; i < 6; i++)
+                        xAs[(i - 2)] = buffer[i];
+                    for (int i = 6; i < 10; i++)
+                        yAs[i % 6] = buffer[i];
+                    for (int i = 10; i < 14; i++)
+                        rot[i % 10] = buffer[i];
+
+                    foreach (StarshipClientData scd in otherPlayers)
+                    {
+                        if (scd.ID == playerId)
+                            scd.Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
+                    }                    
+                }
+            }
         }
     }
 }
