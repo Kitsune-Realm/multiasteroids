@@ -11,6 +11,9 @@ namespace ServerMA
 {
     class Program
     {
+        //public delegate void OnClientAddedHandler(Object sender, ClientAddedMessage e);
+        //public event OnClientAddedHandler OnClientAdded;
+
         private static int port = 6000;
         private Dictionary<TcpClient, StarshipClientData> clients;
         private int clientId;
@@ -47,9 +50,12 @@ namespace ServerMA
             TcpClient client = obj as TcpClient;
             bool done = false;
             this.clients.Add(client, new StarshipClientData(clientId));
-            Console.WriteLine("New Client accepted : " + ((IPEndPoint)client.Client.RemoteEndPoint).Address);           
+            Console.WriteLine(string.Format("New Client accepted : {0} (Player {1})", ((IPEndPoint)client.Client.RemoteEndPoint).Address, clientId));
 
-            this.clientId++;            
+            writeAddClientMessage(client);          
+            this.clientId++;
+            //ClientAddedMessage cam = new ClientAddedMessage();
+            //cam.Send();           
 
             while (!done)
             {
@@ -62,6 +68,7 @@ namespace ServerMA
             byte[] buffer = new byte[12];
             client.GetStream().Read(buffer, 0, buffer.Length);
 
+            // create 1 large byte array containing all player data at once
             byte[] xAs = new byte[4];
             byte[] yAs = new byte[4];
             byte[] rot = new byte[4];
@@ -75,16 +82,17 @@ namespace ServerMA
 
             clients[client].Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
 
-            writeMessage(client);
+            writeMovementMessage(client);
         }
 
-        private void writeMessage(TcpClient client)
+        private void writeMovementMessage(TcpClient client)
         {
             foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clients)
             {
                 if (!entry.Key.Equals(client))
                 {
                     List<byte> data = new List<byte>();
+                    data.Add((int)MessageType.Movement);
                     data.Add((byte)entry.Value.ID);
                     foreach (byte b in FloatUnion.FloatToBytes(entry.Value.X))
                         data.Add(b);
@@ -98,6 +106,34 @@ namespace ServerMA
                 }
             }                
         }
+
+        private void writeAddClientMessage(TcpClient client)
+        {
+            foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clients)
+            {
+                if (!entry.Key.Equals(client))
+                {
+                    List<byte> data = new List<byte>();
+                    data.Add((int)MessageType.AddedClient);
+                    data.Add((byte)clientId);
+                    entry.Key.GetStream().Write(data.ToArray(), 0, data.Count);
+                }
+                else
+                {
+                    foreach (KeyValuePair<TcpClient, StarshipClientData> entry2 in clients)
+                    {
+                        if (!entry2.Key.Equals(client))
+                        {
+                            List<byte> data2 = new List<byte>();
+                            data2.Add((int)MessageType.AddedClient);
+                            data2.Add((byte)entry2.Value.ID);
+                            client.GetStream().Write(data2.ToArray(), 0, data2.Count);
+                        }
+                    }
+                }
+            }
+        }
+
 
         private void writeError(string description)
         {

@@ -37,7 +37,7 @@ namespace MultiAsteroids
 
         public byte[] Read()
         {
-            byte[] buffer = new byte[13];
+            byte[] buffer = new byte[256];
             try
             {
                 client.GetStream().Read(buffer, 0, buffer.Length);
