@@ -67,7 +67,8 @@ namespace MultiAsteroids
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            player = new Starship("Chel Grett", this.Content);            
+            player = new Starship("Chel Grett", this.Content);
+            player.AssignPlayerNumber();
             player.PositionChanged += new EventHandler(player1_PositionChanged);            
         }
 
@@ -190,7 +191,7 @@ namespace MultiAsteroids
 
         private void drawStatistics()
         {
-            spriteBatch.DrawString(font, player.Name, new Vector2(0, 0), Color.White);
+            spriteBatch.DrawString(font, "Player " + player.PlayerNumber, new Vector2(0, 0), Color.White);
             spriteBatch.DrawString(font, "X: " + player.X + " Y: "+ player.Y, new Vector2(0, 11), Color.White);
             spriteBatch.DrawString(font, "Angle: " + player.RotationAngle, new Vector2(0, 22), Color.White);
 

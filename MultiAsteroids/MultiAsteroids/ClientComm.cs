@@ -21,10 +21,11 @@ namespace MultiAsteroids
             client.ReceiveTimeout = 1;
         }
 
-        public void Send(float x, float y, float rotation)
+        public void Send(int playerNumber, float x, float y, float rotation)
         {
-            List<byte> data = new List<byte>();          
-
+            List<byte> data = new List<byte>();
+            data.Add((int)MessageType.Movement);
+            data.Add((byte)playerNumber);
             foreach (byte b in FloatUnion.FloatToBytes(x))
                 data.Add(b);
             foreach (byte b in FloatUnion.FloatToBytes(y))

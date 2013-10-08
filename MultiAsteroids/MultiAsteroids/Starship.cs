@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using AsteroidLibrary;
 
 namespace MultiAsteroids
 {
@@ -19,6 +20,7 @@ namespace MultiAsteroids
         private float y;
         public float Y { get { return this.y; } set { this.y = value; PositionChanged(this, new EventArgs()); } }
         public string Name { get; private set; }
+        public int PlayerNumber { get; set; }
         public Vector2 Position { get; set; }
         public Texture2D ShipTexture { get; set; }
         public bool IsAlive { get; set; }
@@ -37,7 +39,7 @@ namespace MultiAsteroids
 
         public Starship(string name, ContentManager content)
         {
-            this.projectiles = new Projectile[100];
+            this.projectiles = new Projectile[3];
             fillProjectiles(content);
             this.x = 0;
             this.y = 0;
@@ -67,7 +69,17 @@ namespace MultiAsteroids
 
         public void Transmit()
         {
-            this.clientComm.Send(this.X, this.Y, this.RotationAngle);            
+            this.clientComm.Send(this.PlayerNumber, this.X, this.Y, this.RotationAngle);            
+        }
+
+        public void AssignPlayerNumber()
+        {
+            byte[] buffer = new byte[2];
+            byte[] data = new byte[2];
+            data[0] = (int)MessageType.AddedClient;
+            this.clientComm.client.GetStream().Read(buffer, 0, buffer.Length);
+            if (buffer[0] == (int)MessageType.AddedClient)            
+                this.PlayerNumber = buffer[1];
         }
 
         public void UpdatePosition(float x, float y, float rotation)
