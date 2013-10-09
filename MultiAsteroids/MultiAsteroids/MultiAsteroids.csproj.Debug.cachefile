@@ -2,4 +2,8 @@ Content\displayFont.xnb
 Content\ship_texture_breen.xnb
 Content\projectile_1.xnb
 Content\green_projectile_sheet.xnb
-Content\projectile_1_fire.xnb
+Content\menu_items\menu_start.xnb
+Content\menu_items\menu_exit.xnb
+Content\sounds\projectile_1_fire.xnb
+Content\sounds\BigButtonClick.xnb
+Content\sounds\SelectSomething.xnb

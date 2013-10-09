@@ -42,7 +42,7 @@ namespace MultiAsteroids
             this.SpriteHeight = Texture.Height;
             this.SpriteRectangle = new Rectangle(CurrentFrame * SpriteWidth, 0, SpriteWidth, SpriteHeight);
 
-            this.soundEffect = content.Load<SoundEffect>("projectile_1_fire");
+            this.soundEffect = content.Load<SoundEffect>("sounds/projectile_1_fire");
         }
 
         public void UpdatePosition(float x, float y)

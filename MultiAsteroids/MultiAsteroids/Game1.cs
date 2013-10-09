@@ -19,8 +19,14 @@ namespace MultiAsteroids
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        KeyboardState state;
+        KeyboardState newState;
+        KeyboardState oldState;
         List<StarshipClientData> otherPlayers = new List<StarshipClientData>();
+        private GameState gameState;
+
+        private MenuItem menu_start;
+        private MenuItem menu_exit;
+        private SelectCursor selectCursor;
 
         SpriteFont font;
         
@@ -29,7 +35,7 @@ namespace MultiAsteroids
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
+            Content.RootDirectory = "Content";            
         }
 
         /// <summary>
@@ -42,8 +48,7 @@ namespace MultiAsteroids
         {
             // TODO: Add your initialization logic here
             font = Content.Load<SpriteFont>("displayFont");
-
-            LoadGame();
+            
 
             base.Initialize();
         }
@@ -59,8 +64,18 @@ namespace MultiAsteroids
         /// </summary>
         protected override void LoadContent()
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
+            this.gameState = GameState.Loading;
             spriteBatch = new SpriteBatch(GraphicsDevice);
+            this.selectCursor = new SelectCursor(Content);
+            this.selectCursor.menuContent = new string[] { "start", "exit"};
+
+            this.menu_start = new MenuItem(Content, "menu_items/menu_start");
+            this.menu_start.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_start.Texture.Width / 2), this.GraphicsDevice.Viewport.Height / 2);
+            this.menu_exit = new MenuItem(Content, "menu_items/menu_exit");
+            this.menu_exit.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_start.Texture.Width / 2), (this.GraphicsDevice.Viewport.Height / 2)+40);
+
+            LoadGame();
+            this.gameState = GameState.StartMenu;
         }
 
         public void LoadGame()
@@ -92,16 +107,19 @@ namespace MultiAsteroids
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            player.MovementReset();
-            determineKeyboardInput();
-            player.MovementUpdate();
-            player.Transmit();
-
-            readTransmitDataOtherPlayers();
-            
-            updateProjectiles(gameTime);
-
-            //Console.WriteLine("X:{0} Y:{1} R:{2}", player1.X, player1.Y, player1.RotationAngle);
+            if (this.gameState == GameState.Playing)
+            {
+                player.MovementReset();
+                determineKeyboardInput();
+                player.MovementUpdate();
+                player.Transmit();
+                readTransmitDataOtherPlayers();
+                updateProjectiles(gameTime);
+            }
+            else if (this.gameState == GameState.StartMenu)
+            {
+                determineKeyboardInput();
+            }
 
             base.Update(gameTime);
         }
@@ -111,41 +129,59 @@ namespace MultiAsteroids
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
-        {
-            GraphicsDevice.Clear(Color.Black);
+        {     
+            spriteBatch.Begin();                    
 
-            spriteBatch.Begin();
-
-            foreach (Projectile projectile in player.projectiles)
+            if (this.gameState == GameState.Playing)
             {
-                if (projectile.IsAlive)
+                GraphicsDevice.Clear(Color.Black);
+                foreach (Projectile projectile in player.projectiles)
                 {
-                    spriteBatch.Draw(projectile.Texture, new Rectangle((int)projectile.Position.X, (int)projectile.Position.Y, projectile.SpriteWidth, projectile.SpriteHeight), projectile.SpriteRectangle, Color.White, projectile.RotationAngle, projectile.Origin, SpriteEffects.None, 0f);
+                    if (projectile.IsAlive)
+                    {
+                        spriteBatch.Draw(projectile.Texture, new Rectangle((int)projectile.Position.X, (int)projectile.Position.Y, projectile.SpriteWidth, projectile.SpriteHeight), projectile.SpriteRectangle, Color.White, projectile.RotationAngle, projectile.Origin, SpriteEffects.None, 0f);
+                    }
                 }
+                drawStatistics();
+                spriteBatch.Draw(player.ShipTexture, player.Position, null, Color.White, player.RotationAngle, player.Origin, 1.0f, SpriteEffects.None, 0f);
+            }
+            else if (this.gameState == GameState.StartMenu)
+            {
+                GraphicsDevice.Clear(Color.Black);
+                drawGameMenu();
             }
 
-            drawStatistics();
-
-            spriteBatch.Draw(player.ShipTexture, player.Position, null, Color.White, player.RotationAngle, player.Origin, 1.0f, SpriteEffects.None, 0f);
-            spriteBatch.End();
-
+            spriteBatch.End(); 
             base.Draw(gameTime);
         }
 
         private void determineKeyboardInput()
         {
-            state = Keyboard.GetState();
-            if (state.IsKeyDown(Keys.Space))
-                fireProjectile();
-            // Up, Left and Space causes bug, Space wont work then...
-            if (state.IsKeyDown(Keys.W))
-                player.MoveForward = true;
-            if (state.IsKeyDown(Keys.S))
-                player.MoveBackward = true;
-            if (state.IsKeyDown(Keys.A))
-                player.MoveLeft = true;
-            if (state.IsKeyDown(Keys.D))
-                player.MoveRight = true;                            
+            newState = Keyboard.GetState();
+            if (this.gameState == GameState.Playing)
+            {
+                if (newState.IsKeyDown(Keys.Space))
+                    fireProjectile();
+                // Up, Left and Space causes bug, Space wont work then...
+                if (newState.IsKeyDown(Keys.W))
+                    player.MoveForward = true;
+                if (newState.IsKeyDown(Keys.S))
+                    player.MoveBackward = true;
+                if (newState.IsKeyDown(Keys.A))
+                    player.MoveLeft = true;
+                if (newState.IsKeyDown(Keys.D))
+                    player.MoveRight = true;
+            }
+            else if (this.gameState == GameState.StartMenu)
+            {
+                if (newState.IsKeyDown(Keys.W))
+                    if (!oldState.IsKeyDown(Keys.W))
+                        selectCursor.updateMenu(-1);
+                if (newState.IsKeyDown(Keys.S))
+                    if (!oldState.IsKeyDown(Keys.S))
+                        selectCursor.updateMenu(1);               
+            }
+            oldState = newState;
         }
 
         private void updateProjectiles(GameTime gameTime)
@@ -203,6 +239,14 @@ namespace MultiAsteroids
                 spriteBatch.DrawString(font, "Angle: " + scd.Rotation, new Vector2(0, y + 22), Color.White);
                 y += 33;
             }
+        }
+
+        private void drawGameMenu()
+        {            
+            spriteBatch.Draw(this.menu_start.Texture, this.menu_start.position, Color.White);
+            spriteBatch.Draw(this.menu_exit.Texture, this.menu_exit.position, Color.White);
+            //spriteBatch.Draw(selectCursor.Texture, selectCursor.position, Color.White);
+            spriteBatch.DrawString(font, "cursor at: " + selectCursor.menuContent[selectCursor.menuIndex], new Vector2(0, 0), Color.White);
         }
 
         private void readTransmitDataOtherPlayers()

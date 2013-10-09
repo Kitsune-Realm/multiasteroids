@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Net;
 using AsteroidLibrary;
+using System.IO;
 
 namespace ServerMA
 {
@@ -40,7 +41,8 @@ namespace ServerMA
             while (true)
             {
                 TcpClient client = listener.AcceptTcpClient();
-                Thread thread = new Thread(() => handleClientThread(client));                
+                Thread thread = new Thread(() => handleClientThread(client));
+                thread.Name = "handling client";
                 thread.Start();                
             }
         }
@@ -49,33 +51,48 @@ namespace ServerMA
         {
             TcpClient client = obj as TcpClient;            
             this.clients.Add(client, new StarshipClientData(clientId));
-            Console.WriteLine(string.Format("New Client accepted : {0} (Player {1})", ((IPEndPoint)client.Client.RemoteEndPoint).Address, clientId));
+            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+            Console.WriteLine(string.Format("New Client accepted : {0} (Player {1})", clientIp, clientId));
             bool running = true;
             writeAddClientMessage(client);
             this.clientId++;   
 
             while (running)
             {
-                readMessage(client);
-                writeMovementMessage(client);
+                try
+                {
+                    readMessage(client);
+                    writeMovementMessage(client);
+                }
+                catch (IOException ex)
+                {
+                    Console.WriteLine(string.Format("ERROR({0}): {1}", clientIp, ex.Message));
+                    running = false;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Console.WriteLine(string.Format("ERROR({0}): {1}", clientIp, ex.Message));
+                    running = false;
+                }
             }
         }
 
+        // CREATE LOBBY, adding new players during gametime causes big difficulties, cannnot be overcome within timelimit.
         private void readMessage(TcpClient client)
         {
-            byte[] buffer = new byte[(clients.Count*14) + 1];
+            byte[] buffer = new byte[(clients.Count * 13) + 1];
             client.GetStream().Read(buffer, 0, buffer.Length);
 
-            switch((int)buffer[0])
+            switch ((int)buffer[0])
             {
                 case (int)MessageType.Movement:
-                    for (int i = 1; i < buffer.Length; i+=14) // per client
+                    for (int i = 1; i < buffer.Length; i += 13) // per client
                     {
                         byte[] xAs = new byte[4];
                         byte[] yAs = new byte[4];
                         byte[] rot = new byte[4];
                         int player = (int)buffer[i];
-                        for(int c = 0; c<4; c++)
+                        for (int c = 0; c < 4; c++)
                             xAs[c] = buffer[(i + 1) + c];
                         for (int c = 0; c < 4; c++)
                             yAs[c] = buffer[(i + 5) + c];
@@ -86,13 +103,13 @@ namespace ServerMA
                         {
                             if (entry.Value.ID == player)
                             {
-                                entry.Value.Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));                                
+                                entry.Value.Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
                             }
                             break;
                         }
                     }
-                    break;
-            }
+                    break;                
+            }            
         }
 
         private void writeMovementMessage(TcpClient client)
@@ -109,7 +126,7 @@ namespace ServerMA
                 foreach (byte b in FloatUnion.FloatToBytes(entry.Value.Rotation))
                     data.Add(b);             
             }
-            client.GetStream().Write(data.ToArray(), 0, data.Count);
+             client.GetStream().Write(data.ToArray(), 0, data.Count);  
         }
 
         private void writeAddClientMessage(TcpClient client)
@@ -118,31 +135,7 @@ namespace ServerMA
             data.Add((int)MessageType.AddedClient);
             data.Add((byte)clientId);
             client.GetStream().Write(data.ToArray(), 0, data.Count);
-        }
-            //foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clients)
-            //{
-            //    if (!entry.Key.Equals(client))
-            //    {
-            //        List<byte> data = new List<byte>();
-            //        data.Add((int)MessageType.AddedClient);
-            //        data.Add((byte)clientId);
-            //        entry.Key.GetStream().Write(data.ToArray(), 0, data.Count);
-            //    }
-            //    else
-            //    {
-            //        foreach (KeyValuePair<TcpClient, StarshipClientData> entry2 in clients)
-            //        {
-            //            if (!entry2.Key.Equals(client))
-            //            {
-            //                List<byte> data2 = new List<byte>();
-            //                data2.Add((int)MessageType.AddedClient);
-            //                data2.Add((byte)entry2.Value.ID);
-            //                client.GetStream().Write(data2.ToArray(), 0, data2.Count);
-            //            }
-            //        }
-            //    }
-            //}
-        
+        }       
 
 
         private void writeError(string description)
