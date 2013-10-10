@@ -10,6 +10,6 @@ namespace MultiAsteroids
         StartMenu,
         Loading,
         Playing,
-        Pause
+        Lobby
     }
 }

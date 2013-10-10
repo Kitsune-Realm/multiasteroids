@@ -7,3 +7,6 @@ Content\menu_items\menu_exit.xnb
 Content\sounds\projectile_1_fire.xnb
 Content\sounds\BigButtonClick.xnb
 Content\sounds\SelectSomething.xnb
+Content\menu_items\lobby_ready_on.xnb
+Content\menu_items\lobby_ready_off.xnb
+Content\sounds\ClickSomething.xnb

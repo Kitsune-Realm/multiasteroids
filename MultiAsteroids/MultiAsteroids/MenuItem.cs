@@ -15,11 +15,20 @@ namespace MultiAsteroids
     class MenuItem
     {
         public Texture2D Texture;
+        public Texture2D Texture_on;
+        public Texture2D Texture_off;
         public Vector2 position { get; set; }
 
         public MenuItem(ContentManager content, string texture)
         {
             this.Texture = content.Load<Texture2D>(texture);
+            this.position = new Vector2(0, 0);
+        }
+
+        public MenuItem(ContentManager content, string texture_on, string texture_off)
+        {
+            this.Texture_on = content.Load<Texture2D>(texture_on);
+            this.Texture_off = content.Load<Texture2D>(texture_off);
             this.position = new Vector2(0, 0);
         }
 

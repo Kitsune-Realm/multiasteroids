@@ -14,11 +14,17 @@ namespace MultiAsteroids
     {
         public int Port = 6000;
         public TcpClient client;
+        public bool isListening { get; set; }
 
         public ClientComm()
         {
+            this.isListening = false;
+        }
+
+        public void StartListening()
+        {
             client = new TcpClient("127.0.0.1", Port);
-            client.ReceiveTimeout = 1;
+            client.ReceiveTimeout = 10;        
         }
 
         public void Send(int playerNumber, float x, float y, float rotation)
@@ -33,24 +39,28 @@ namespace MultiAsteroids
             foreach (byte b in FloatUnion.FloatToBytes(rotation))
                 data.Add(b);
 
-            this.client.GetStream().Write(data.ToArray(), 0, data.Count);           
+            this.client.GetStream().Write(data.ToArray(), 0, data.Count);
         }
 
         public byte[] Read()
         {
-            byte[] buffer = new byte[256];
-            try
+            byte[] buffer = new byte[client.ReceiveBufferSize]; // These buffers are humongeously huge... noob
+            List<byte> data = new List<byte>();
+            client.GetStream().Read(buffer, 0, client.ReceiveBufferSize);
+            switch ((int)buffer[0])
             {
-                client.GetStream().Read(buffer, 0, buffer.Length);
+                case (int)MessageType.PlayerReadyStatus:
+                    for (int i = 0; i < 2; i++ )
+                    {
+                        if (buffer[i] > 0)
+                            data.Add(buffer[i]);
+                        else
+                            break;
+                    }
+                    return data.ToArray();
             }
-            catch (IOException e)
-            {
-                return null;
-            }
-            return buffer;
+            return null;        
         }
-
-
 
         [Obsolete]
         private string generateIP()

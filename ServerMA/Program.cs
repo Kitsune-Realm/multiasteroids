@@ -16,8 +16,11 @@ namespace ServerMA
         //public event OnClientAddedHandler OnClientAdded;
 
         private static int port = 6000;
-        private Dictionary<TcpClient, StarshipClientData> clients;
+        private Dictionary<TcpClient, StarshipClientData> clientQue;
         private int clientId;
+        private int lobbyId;
+        private Lobby lobby;
+        private int playersReady = 10;
 
         static void Main(string[] args)
         {
@@ -28,12 +31,16 @@ namespace ServerMA
         private void run()
         {
             Console.WriteLine("Server for MultiAsteroids game");
-            this.clients = new Dictionary<TcpClient, StarshipClientData>();
+            this.clientQue = new Dictionary<TcpClient, StarshipClientData>();
             this.clientId = 1;
+            this.lobbyId = 1;
+            lobby = new Lobby(lobbyId);
+            Console.WriteLine(string.Format("Lobby #{0} is open now", this.lobbyId));
+
 
             IPAddress ip;
             if (!IPAddress.TryParse("0.0.0.0", out ip))
-                writeError("cannot parse this IP");
+                Console.WriteLine("cannot parse this IP");
 
             TcpListener listener = new TcpListener(ip, port);
             listener.Start();
@@ -49,13 +56,25 @@ namespace ServerMA
 
         private void handleClientThread(object obj)
         {
-            TcpClient client = obj as TcpClient;            
-            this.clients.Add(client, new StarshipClientData(clientId));
-            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-            Console.WriteLine(string.Format("New Client accepted : {0} (Player {1})", clientIp, clientId));
-            bool running = true;
-            writeAddClientMessage(client);
-            this.clientId++;   
+            TcpClient client = obj as TcpClient;
+            StarshipClientData clientData = new StarshipClientData(clientId);
+            bool running = false;
+            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();            
+
+            updateLobby(clientData, clientIp);
+
+            this.clientQue.Add(client, clientData);                
+            running = true;
+
+            while (running)
+            {
+                writeClientReadyStatus(client);
+                readClientReadyStatus(client);
+            }
+            running = true;
+
+            //writeAddClientMessage(client);
+            this.clientId++; 
 
             while (running)
             {
@@ -77,12 +96,26 @@ namespace ServerMA
             }
         }
 
-        // CREATE LOBBY, adding new players during gametime causes big difficulties, cannnot be overcome within timelimit.
+        private void updateLobby(StarshipClientData clientData, string clientIp)
+        {
+            if (lobby.OtherPlayersInLobby.Count == 0 && lobby.Host == null) //first in lobby            
+            {
+                lobby.Host = clientData;
+                Console.WriteLine("Player {0} ({1}) entered lobby {2} as Host", clientData.ID, clientIp, lobbyId);
+            }
+            else if (lobby.OtherPlayersInLobby.Count < 3)
+            {
+                lobby.OtherPlayersInLobby.Add(clientData);
+                Console.WriteLine("Player {0} ({1}) entered lobby {2} at spot {3}", clientData.ID, clientIp, lobbyId, (lobby.OtherPlayersInLobby.Count - 1));
+            }
+            else
+                Console.WriteLine("ERROR({0}): cannot enter lobby", clientIp);            
+        }
+
         private void readMessage(TcpClient client)
         {
-            byte[] buffer = new byte[(clients.Count * 13) + 1];
-            client.GetStream().Read(buffer, 0, buffer.Length);
-
+            byte[] buffer = new byte[(clientQue.Count * 13) + 1];
+            client.GetStream().Read(buffer, 0, buffer.Length);            
             switch ((int)buffer[0])
             {
                 case (int)MessageType.Movement:
@@ -99,7 +132,7 @@ namespace ServerMA
                         for (int c = 0; c < 4; c++)
                             rot[c] = buffer[(i + 9) + c];
 
-                        foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clients)
+                        foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clientQue)
                         {
                             if (entry.Value.ID == player)
                             {
@@ -116,7 +149,7 @@ namespace ServerMA
         {
             List<byte> data = new List<byte>();
             data.Add((int)MessageType.Movement); // Message type byte
-            foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clients)
+            foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clientQue)
             {   
                 data.Add((byte)entry.Value.ID); // Player number byte
                 foreach (byte b in FloatUnion.FloatToBytes(entry.Value.X))
@@ -126,23 +159,50 @@ namespace ServerMA
                 foreach (byte b in FloatUnion.FloatToBytes(entry.Value.Rotation))
                     data.Add(b);             
             }
-             client.GetStream().Write(data.ToArray(), 0, data.Count);  
+            client.GetStream().Write(data.ToArray(), 0, data.Count);
+            client.GetStream().Flush();  
         }
 
+        // change to delegates?
         private void writeAddClientMessage(TcpClient client)
         {
             List<byte> data = new List<byte>();
             data.Add((int)MessageType.AddedClient);
             data.Add((byte)clientId);
             client.GetStream().Write(data.ToArray(), 0, data.Count);
-        }       
+            client.GetStream().Flush();
+        }
 
-
-        private void writeError(string description)
+        private void writeClientReadyStatus(TcpClient client)
         {
-            Console.WriteLine("ERROR: " + description);
-            Console.ReadKey();
-            Environment.Exit(0);
+            List<byte> data = new List<byte>();
+            data.Add((int)MessageType.PlayerReadyStatus);
+            data.Add((byte)playersReady);
+            client.GetStream().Write(data.ToArray(), 0, data.Count);
+            client.GetStream().Flush();
+        }
+
+        private void readClientReadyStatus(TcpClient client)
+        {
+            try
+            {
+                byte[] buffer = new byte[client.ReceiveBufferSize];
+                List<byte> data = new List<byte>();
+                client.GetStream().Read(buffer, 0, client.ReceiveBufferSize);
+                switch ((int)buffer[0])
+                {
+                    case (int)MessageType.PlayerReadyStatus:
+                        if (buffer[1] == 1)
+                            playersReady = 15;
+                        else
+                            playersReady = 10;
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERROR: " + ex.Message);
+            }
         }
     }
 }

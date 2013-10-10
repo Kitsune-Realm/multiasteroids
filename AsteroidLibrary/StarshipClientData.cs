@@ -11,11 +11,13 @@ namespace AsteroidLibrary
         public float Y { get; set; }
         public float Rotation { get; set; }
         public int ID { get; set; }
+        public bool isReady { get; set; }
       
 
         public StarshipClientData(int id)
         {
             this.ID = id;
+            this.isReady = false;
         }
 
         public void Update(float x, float y, float rotation)

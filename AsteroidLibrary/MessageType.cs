@@ -7,7 +7,9 @@ namespace AsteroidLibrary
 {
     public enum MessageType
     {
-        Movement = 0,
-        AddedClient = 1
+        EndOfMessage = 0,
+        Movement = 1,
+        AddedClient = 2,
+        PlayerReadyStatus = 3
     }
 }

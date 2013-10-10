@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using AsteroidLibrary;
+using System.Collections;
 
 namespace MultiAsteroids
 {
@@ -26,7 +27,11 @@ namespace MultiAsteroids
 
         private MenuItem menu_start;
         private MenuItem menu_exit;
+        private MenuItem lobby_ready;
         private SelectCursor selectCursor;
+
+        private bool lobbyFinished;
+        private bool[] pR = new bool[4];
 
         SpriteFont font;
         
@@ -45,17 +50,9 @@ namespace MultiAsteroids
         /// and initialize them as well.
         /// </summary>
         protected override void Initialize()
-        {
-            // TODO: Add your initialization logic here
-            font = Content.Load<SpriteFont>("displayFont");
-            
-
+        {            
+            font = Content.Load<SpriteFont>("displayFont");            
             base.Initialize();
-        }
-
-        void player1_PositionChanged(object sender, EventArgs e)
-        {
-            player.UpdatePosition();
         }
 
         /// <summary>
@@ -73,19 +70,14 @@ namespace MultiAsteroids
             this.menu_start.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_start.Texture.Width / 2), this.GraphicsDevice.Viewport.Height / 2);
             this.menu_exit = new MenuItem(Content, "menu_items/menu_exit");
             this.menu_exit.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_start.Texture.Width / 2), (this.GraphicsDevice.Viewport.Height / 2)+40);
+            this.lobby_ready = new MenuItem(Content, "menu_items/lobby_ready_on", "menu_items/lobby_ready_off");
+            this.lobby_ready.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_start.Texture.Width / 2), this.GraphicsDevice.Viewport.Height / 2);
+            this.lobbyFinished = false;
+            spriteBatch = new SpriteBatch(GraphicsDevice);            
+            player = new Starship(this.Content);  
 
-            LoadGame();
-            this.gameState = GameState.StartMenu;
-        }
-
-        public void LoadGame()
-        {
-            spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            player = new Starship("Chel Grett", this.Content);
-            player.AssignPlayerNumber();
-            player.PositionChanged += new EventHandler(player1_PositionChanged);            
-        }
+            this.gameState = GameState.StartMenu;            
+        }        
 
         /// <summary>
         /// UnloadContent will be called once per game and is the place to unload
@@ -120,7 +112,33 @@ namespace MultiAsteroids
             {
                 determineKeyboardInput();
             }
+            else if (this.gameState == GameState.Lobby)
+            {
+                determineKeyboardInput();
+                if (!player.clientComm.isListening)
+                {
+                    player.clientComm.StartListening();
+                    player.clientComm.isListening = true;
+                }
+                byte[] readyData = new byte[2];
+                readyData[0] = (int)MessageType.PlayerReadyStatus;
+                readyData[1] = (byte)player.getReadyStatus();
 
+                player.clientComm.client.GetStream().Write(readyData,0,2);
+                byte[] read = player.clientComm.Read();
+                if (read[0] == (int)MessageType.PlayerReadyStatus)
+                {
+                    BitArray ba = new BitArray(new byte[] { read[1] });
+                    pR[0] = ba.Get(3);
+                    pR[1] = ba.Get(2);
+                    pR[2] = ba.Get(1);
+                    pR[3] = ba.Get(0);
+                    if (ba.Get(0) && ba.Get(1) && ba.Get(2) && ba.Get(3))
+                        // get all players from server
+                        //player.AssignPlayerNumber();
+                        gameState = GameState.Playing;
+                }                 
+            }
             base.Update(gameTime);
         }
 
@@ -148,7 +166,14 @@ namespace MultiAsteroids
             else if (this.gameState == GameState.StartMenu)
             {
                 GraphicsDevice.Clear(Color.Black);
-                drawGameMenu();
+                drawStartMenu();
+            }
+
+            else if (this.gameState == GameState.Lobby)
+            {
+                GraphicsDevice.Clear(Color.Black);
+                spriteBatch.DrawString(font, string.Format("{0}, {1}, {2}, {3} ", pR[0], pR[1], pR[2], pR[3]), new Vector2(0, 0), Color.White);
+                drawLobbyMenu();
             }
 
             spriteBatch.End(); 
@@ -179,8 +204,41 @@ namespace MultiAsteroids
                         selectCursor.updateMenu(-1);
                 if (newState.IsKeyDown(Keys.S))
                     if (!oldState.IsKeyDown(Keys.S))
-                        selectCursor.updateMenu(1);               
+                        selectCursor.updateMenu(1);
+                if (newState.IsKeyDown(Keys.Enter))
+                    if (!oldState.IsKeyDown(Keys.Enter))
+                        if (selectCursor.menuIndex == 0)
+                        {
+                            this.gameState = GameState.Lobby;
+                            selectCursor.sfxClick.Play();
+                        }
+                        else
+                            Environment.Exit(0);
             }
+            else if (this.gameState == GameState.Lobby)
+            {
+                if (newState.IsKeyDown(Keys.Enter))
+                    if (!oldState.IsKeyDown(Keys.Enter))
+                    {
+                        if (player.isReady)
+                        {
+                            player.isReady = false;
+                            selectCursor.sfxSelect.Play();
+                        }
+                        else
+                        {
+                            player.isReady = true;
+                            selectCursor.sfxSelect.Play();
+                        }
+                    }
+
+            }
+
+            // these keys can be used at all time while program is running
+            if (newState.IsKeyDown(Keys.Escape))
+                if (!oldState.IsKeyDown(Keys.Escape))
+                    Environment.Exit(0);
+
             oldState = newState;
         }
 
@@ -241,12 +299,20 @@ namespace MultiAsteroids
             }
         }
 
-        private void drawGameMenu()
+        private void drawStartMenu()
         {            
             spriteBatch.Draw(this.menu_start.Texture, this.menu_start.position, Color.White);
             spriteBatch.Draw(this.menu_exit.Texture, this.menu_exit.position, Color.White);
             //spriteBatch.Draw(selectCursor.Texture, selectCursor.position, Color.White);
             spriteBatch.DrawString(font, "cursor at: " + selectCursor.menuContent[selectCursor.menuIndex], new Vector2(0, 0), Color.White);
+        }
+
+        private void drawLobbyMenu()
+        {
+            if(player.isReady)
+                spriteBatch.Draw(this.lobby_ready.Texture_on, this.menu_start.position, Color.White);
+            else
+                spriteBatch.Draw(this.lobby_ready.Texture_off, this.menu_start.position, Color.White);
         }
 
         private void readTransmitDataOtherPlayers()

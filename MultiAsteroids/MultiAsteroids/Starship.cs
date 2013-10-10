@@ -19,7 +19,6 @@ namespace MultiAsteroids
         public float X { get { return this.x; } set { this.x = value; PositionChanged(this, new EventArgs()); } }
         private float y;
         public float Y { get { return this.y; } set { this.y = value; PositionChanged(this, new EventArgs()); } }
-        public string Name { get; private set; }
         public int PlayerNumber { get; set; }
         public Vector2 Position { get; set; }
         public Texture2D ShipTexture { get; set; }
@@ -34,16 +33,16 @@ namespace MultiAsteroids
         public float BackVelocity { get; set; }
         public Projectile[] projectiles;
         public ClientComm clientComm { get; set; }
+        public bool isReady { get; set; }
 
         public event EventHandler PositionChanged;
 
-        public Starship(string name, ContentManager content)
+        public Starship(ContentManager content)
         {
             this.projectiles = new Projectile[3];
             fillProjectiles(content);
             this.x = 0;
             this.y = 0;
-            this.Name = name;
             this.Position = new Vector2(0,0);
             this.Origin = new Vector2(0,0);
             this.RotationAngle = 0;
@@ -52,6 +51,7 @@ namespace MultiAsteroids
             this.PositionChanged += new EventHandler(Starship_PositionChanged);
             this.IsAlive = true;
             this.clientComm = new ClientComm();
+            this.isReady = false;
 
             this.ShipTexture = content.Load<Texture2D>("ship_texture_breen");
             this.Origin = new Vector2(this.ShipTexture.Width / 2, this.ShipTexture.Height / 2);
@@ -77,7 +77,7 @@ namespace MultiAsteroids
             byte[] buffer = new byte[2];
             byte[] data = new byte[2];
             data[0] = (int)MessageType.AddedClient;
-            this.clientComm.client.GetStream().Read(buffer, 0, buffer.Length);
+            this.clientComm.client.GetStream().Read(buffer, 0, buffer.Length); // starts immediately, hold until player entered game
             if (buffer[0] == (int)MessageType.AddedClient)            
                 this.PlayerNumber = buffer[1];
         }
@@ -127,6 +127,14 @@ namespace MultiAsteroids
             {
                 projectiles[i] = new Projectile(content);
             }
+        }
+
+        public int getReadyStatus()
+        {
+            if (isReady)
+                return 1;
+            else
+                return 0;
         }
     }
 }
