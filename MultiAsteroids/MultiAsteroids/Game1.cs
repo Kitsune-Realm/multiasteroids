@@ -31,7 +31,7 @@ namespace MultiAsteroids
         private SelectCursor selectCursor;
 
         private bool lobbyFinished;
-        private bool[] pR = new bool[4];
+        
 
         SpriteFont font;
         
@@ -66,12 +66,12 @@ namespace MultiAsteroids
             this.selectCursor = new SelectCursor(Content);
             this.selectCursor.menuContent = new string[] { "start", "exit"};
 
-            this.menu_start = new MenuItem(Content, "menu_items/menu_start");
-            this.menu_start.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_start.Texture.Width / 2), this.GraphicsDevice.Viewport.Height / 2);
-            this.menu_exit = new MenuItem(Content, "menu_items/menu_exit");
-            this.menu_exit.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_start.Texture.Width / 2), (this.GraphicsDevice.Viewport.Height / 2)+40);
+            this.menu_start = new MenuItem(Content, "menu_items/menu_start_on", "menu_items/menu_start_off");
+            this.menu_start.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_start.Texture_on.Width / 2), this.GraphicsDevice.Viewport.Height / 2);
+            this.menu_exit = new MenuItem(Content, "menu_items/menu_exit_on", "menu_items/menu_exit_off");
+            this.menu_exit.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_exit.Texture_on.Width / 2), (this.GraphicsDevice.Viewport.Height / 2)+40);
             this.lobby_ready = new MenuItem(Content, "menu_items/lobby_ready_on", "menu_items/lobby_ready_off");
-            this.lobby_ready.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_start.Texture.Width / 2), this.GraphicsDevice.Viewport.Height / 2);
+            this.lobby_ready.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.lobby_ready.Texture_on.Width / 2), this.GraphicsDevice.Viewport.Height / 2);
             this.lobbyFinished = false;
             spriteBatch = new SpriteBatch(GraphicsDevice);            
             player = new Starship(this.Content);  
@@ -115,27 +115,25 @@ namespace MultiAsteroids
             else if (this.gameState == GameState.Lobby)
             {
                 determineKeyboardInput();
-                if (!player.clientComm.isListening)
-                {
+                if (!player.clientComm.isListening)                
                     player.clientComm.StartListening();
-                    player.clientComm.isListening = true;
-                }
-                byte[] readyData = new byte[2];
+                if(player.PlayerNumber <= 0)
+                    player.AssignPlayerNumber();
+                
+                byte[] readyData = new byte[3];
                 readyData[0] = (int)MessageType.PlayerReadyStatus;
                 readyData[1] = (byte)player.getReadyStatus();
+                readyData[2] = (byte)1;
 
-                player.clientComm.client.GetStream().Write(readyData,0,2);
+                player.clientComm.client.GetStream().Write(readyData,0,3);
                 byte[] read = player.clientComm.Read();
                 if (read[0] == (int)MessageType.PlayerReadyStatus)
                 {
-                    BitArray ba = new BitArray(new byte[] { read[1] });
-                    pR[0] = ba.Get(3);
-                    pR[1] = ba.Get(2);
-                    pR[2] = ba.Get(1);
-                    pR[3] = ba.Get(0);
-                    if (ba.Get(0) && ba.Get(1) && ba.Get(2) && ba.Get(3))
-                        // get all players from server
-                        //player.AssignPlayerNumber();
+                    for (int i = 0; i < read[1]; i++)
+                    {
+
+                    }
+                    if (read[2] == 1)
                         gameState = GameState.Playing;
                 }                 
             }
@@ -300,9 +298,15 @@ namespace MultiAsteroids
         }
 
         private void drawStartMenu()
-        {            
-            spriteBatch.Draw(this.menu_start.Texture, this.menu_start.position, Color.White);
-            spriteBatch.Draw(this.menu_exit.Texture, this.menu_exit.position, Color.White);
+        {    
+            if(selectCursor.menuIndex == 0)
+                spriteBatch.Draw(this.menu_start.Texture_on, this.menu_start.position, Color.White);
+            else
+                spriteBatch.Draw(this.menu_start.Texture_off, this.menu_start.position, Color.White);
+            if (selectCursor.menuIndex == 1)
+                spriteBatch.Draw(this.menu_exit.Texture_on, this.menu_exit.position, Color.White);
+            else
+                spriteBatch.Draw(this.menu_exit.Texture_off, this.menu_exit.position, Color.White);
             //spriteBatch.Draw(selectCursor.Texture, selectCursor.position, Color.White);
             spriteBatch.DrawString(font, "cursor at: " + selectCursor.menuContent[selectCursor.menuIndex], new Vector2(0, 0), Color.White);
         }

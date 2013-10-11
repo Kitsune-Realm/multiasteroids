@@ -77,15 +77,15 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="menu_items\menu_start.jpg">
-      <Name>menu_start</Name>
+    <Compile Include="menu_items\menu_start_on.jpg">
+      <Name>menu_start_on</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="menu_items\menu_exit.jpg">
-      <Name>menu_exit</Name>
+    <Compile Include="menu_items\menu_exit_on.jpg">
+      <Name>menu_exit_on</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
@@ -123,6 +123,20 @@
       <Name>ClickSomething</Name>
       <Importer>WavImporter</Importer>
       <Processor>SoundEffectProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="menu_items\menu_start_off.jpg">
+      <Name>menu_start_off</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="menu_items\menu_exit_off.jpg">
+      <Name>menu_exit_off</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\XNA Game Studio\$(XnaFrameworkVersion)\Microsoft.Xna.GameStudio.ContentPipeline.targets" />

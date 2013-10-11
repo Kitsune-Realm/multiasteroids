@@ -7,6 +7,7 @@ using System.Threading;
 using System.Net;
 using AsteroidLibrary;
 using System.IO;
+using System.Collections;
 
 namespace ServerMA
 {
@@ -20,7 +21,6 @@ namespace ServerMA
         private int clientId;
         private int lobbyId;
         private Lobby lobby;
-        private int playersReady = 10;
 
         static void Main(string[] args)
         {
@@ -66,15 +66,17 @@ namespace ServerMA
             this.clientQue.Add(client, clientData);                
             running = true;
 
+            writeAddClientMessage(client);
+            lobby.playersReady.Add(false);
+            Console.WriteLine("Player {0} has been added!", clientId);
+            this.clientId++; 
+
             while (running)
             {
                 writeClientReadyStatus(client);
                 readClientReadyStatus(client);
             }
-            running = true;
-
-            //writeAddClientMessage(client);
-            this.clientId++; 
+            running = true;                      
 
             while (running)
             {
@@ -177,7 +179,8 @@ namespace ServerMA
         {
             List<byte> data = new List<byte>();
             data.Add((int)MessageType.PlayerReadyStatus);
-            data.Add((byte)playersReady);
+            data.Add((byte)lobby.OtherPlayersInLobby.Count);
+            data.Add((byte)lobby.allPlayersReady());
             client.GetStream().Write(data.ToArray(), 0, data.Count);
             client.GetStream().Flush();
         }
@@ -192,10 +195,7 @@ namespace ServerMA
                 switch ((int)buffer[0])
                 {
                     case (int)MessageType.PlayerReadyStatus:
-                        if (buffer[1] == 1)
-                            playersReady = 15;
-                        else
-                            playersReady = 10;
+                        lobby.playersReady[buffer[2] -1] = (buffer[1] == 1); // true or false
                         break;
                 }
             }

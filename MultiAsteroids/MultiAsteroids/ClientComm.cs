@@ -24,7 +24,8 @@ namespace MultiAsteroids
         public void StartListening()
         {
             client = new TcpClient("127.0.0.1", Port);
-            client.ReceiveTimeout = 10;        
+            client.ReceiveTimeout = 10;
+            this.isListening = true;
         }
 
         public void Send(int playerNumber, float x, float y, float rotation)
@@ -50,12 +51,9 @@ namespace MultiAsteroids
             switch ((int)buffer[0])
             {
                 case (int)MessageType.PlayerReadyStatus:
-                    for (int i = 0; i < 2; i++ )
+                    for (int i = 0; i < 3; i++ )
                     {
-                        if (buffer[i] > 0)
-                            data.Add(buffer[i]);
-                        else
-                            break;
+                        data.Add(buffer[i]);
                     }
                     return data.ToArray();
             }
