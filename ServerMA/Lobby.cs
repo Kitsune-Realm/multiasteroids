@@ -9,27 +9,43 @@ namespace ServerMA
 {
     class Lobby
     {
-        public List<StarshipClientData> OtherPlayersInLobby { get; set; }
+        public List<StarshipClientData> PlayersInLobby { get; set; }
         public TcpClient client { get; set; }
         public int LobbyID { get; set; }
-        public StarshipClientData Host { get; set; }
-        public bool gameStarted { get; set; }
-        public List<bool> playersReady;
+        public bool allPlayersReady { get; set; }
 
         public Lobby(int id)
         {
-            this.OtherPlayersInLobby = new List<StarshipClientData>();
+            this.PlayersInLobby = new List<StarshipClientData>();
             this.LobbyID = id;            
-            this.gameStarted = false;
-            this.playersReady = new List<bool>();
+            this.allPlayersReady = false;
         }
 
-        public int allPlayersReady()
-        {            
-            foreach (bool b in playersReady)
-                if (!b)
-                    return 0;
-            return 1;
+        public StarshipClientData GetHost()
+        {
+            if(PlayersInLobby.Count > 0)
+                return PlayersInLobby[0];
+            return null;
+        }
+
+        public StarshipClientData GetPlayerInLobby(int playerNumber)
+        {
+            foreach (StarshipClientData scd in PlayersInLobby)
+            {
+                if (scd.ID == playerNumber)
+                    return scd;
+            }
+            return null;
+        }
+
+        public bool CheckAllPlayersReady()
+        {
+            foreach (StarshipClientData scd in PlayersInLobby)
+            {
+                if (!scd.isReady)
+                    return false;
+            }
+            return true;
         }
     }
 }

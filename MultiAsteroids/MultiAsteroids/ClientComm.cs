@@ -12,7 +12,7 @@ namespace MultiAsteroids
 {
     class ClientComm
     {
-        public int Port = 6000;
+        public int Port = 5938;
         public TcpClient client;
         public bool isListening { get; set; }
 
@@ -50,12 +50,15 @@ namespace MultiAsteroids
             client.GetStream().Read(buffer, 0, client.ReceiveBufferSize);
             switch ((int)buffer[0])
             {
+                // ID, AmountPlayers, P1, P2, P3, P4
                 case (int)MessageType.PlayerReadyStatus:
-                    for (int i = 0; i < 3; i++ )
+                    for (int i = 0; i < 6; i++ )
                     {
                         data.Add(buffer[i]);
                     }
                     return data.ToArray();
+                case (int)MessageType.Movement:
+                    return null;
             }
             return null;        
         }

@@ -118,23 +118,26 @@ namespace MultiAsteroids
                 if (!player.clientComm.isListening)                
                     player.clientComm.StartListening();
                 if(player.PlayerNumber <= 0)
-                    player.AssignPlayerNumber();
+                    player.AssignPlayerNumber();                
                 
                 byte[] readyData = new byte[3];
                 readyData[0] = (int)MessageType.PlayerReadyStatus;
                 readyData[1] = (byte)player.getReadyStatus();
-                readyData[2] = (byte)1;
+                readyData[2] = (byte)player.PlayerNumber;
 
                 player.clientComm.client.GetStream().Write(readyData,0,3);
                 byte[] read = player.clientComm.Read();
                 if (read[0] == (int)MessageType.PlayerReadyStatus)
                 {
-                    for (int i = 0; i < read[1]; i++)
+                    bool ready = true;
+                    for (int i = 2; i < read[1]+2; i++)
                     {
-
+                        if (read[i] != 1)
+                            ready = false;
                     }
-                    if (read[2] == 1)
-                        gameState = GameState.Playing;
+                    if(ready)
+                        this.gameState = GameState.Playing;
+                    
                 }                 
             }
             base.Update(gameTime);
@@ -170,7 +173,7 @@ namespace MultiAsteroids
             else if (this.gameState == GameState.Lobby)
             {
                 GraphicsDevice.Clear(Color.Black);
-                spriteBatch.DrawString(font, string.Format("{0}, {1}, {2}, {3} ", pR[0], pR[1], pR[2], pR[3]), new Vector2(0, 0), Color.White);
+                //spriteBatch.DrawString(font, string.Format("{0}, {1}, {2}, {3} ", pR[0], pR[1], pR[2], pR[3]), new Vector2(0, 0), Color.White);
                 drawLobbyMenu();
             }
 
