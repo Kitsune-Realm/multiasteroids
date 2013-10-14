@@ -17,7 +17,7 @@ namespace ServerMA
         //public event OnClientAddedHandler OnClientAdded;
 
         private static int port = 5938;
-        private Dictionary<TcpClient, StarshipClientData> clientQue;
+        private List<TcpClient> clients;
         private int clientId;
         private int lobbyId;
         private Lobby lobby;        
@@ -31,7 +31,7 @@ namespace ServerMA
         private void run()
         {
             Console.WriteLine("Server for MultiAsteroids game");
-            this.clientQue = new Dictionary<TcpClient, StarshipClientData>();
+            this.clients = new List<TcpClient>();
             this.clientId = 1;
             this.lobbyId = 1;
             lobby = new Lobby(lobbyId);
@@ -61,9 +61,8 @@ namespace ServerMA
             bool running = true;
             string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();            
 
-            updateLobby(clientData, clientIp);
-
-            this.clientQue.Add(client, clientData);                
+            updateLobby(clientData, clientIp);            
+            this.clients.Add(client);                
 
             writeAddClientMessage(client);
             Console.WriteLine("Player {0} has been added!", clientId);
@@ -78,16 +77,11 @@ namespace ServerMA
             while (running)
             {
                 try
-                {
+                {                    
                     writeMovementMessage(client);
-                    readMessage(client);                    
+                    readMovementMessage(client);                    
                 }
-                catch (IOException ex)
-                {
-                    Console.WriteLine(string.Format("ERROR({0}): {1}", clientIp, ex.Message));
-                    running = false;
-                }
-                catch (InvalidOperationException ex)
+                catch (Exception ex)
                 {
                     Console.WriteLine(string.Format("ERROR({0}): {1}", clientIp, ex.Message));
                     running = false;
@@ -111,15 +105,15 @@ namespace ServerMA
                 Console.WriteLine("ERROR({0}): cannot enter lobby", clientIp);            
         }
 
-        private void readMessage(TcpClient client)
+        private void readMovementMessage(TcpClient client)
         {
-            byte[] buffer = new byte[(clientQue.Count * 13) + 1];
+            byte[] buffer = new byte[(lobby.PlayersInLobby.Count * 13) + 1];
             client.GetStream().Read(buffer, 0, buffer.Length);            
             switch ((int)buffer[0])
             {
                 case (int)MessageType.Movement:
-                    for (int i = 1; i < buffer.Length; i += 13) // per client
-                    {
+                    for (int i = 1; i < lobby.PlayersInLobby.Count; i += 13) // per client
+                    {                        
                         byte[] xAs = new byte[4];
                         byte[] yAs = new byte[4];
                         byte[] rot = new byte[4];
@@ -130,15 +124,8 @@ namespace ServerMA
                             yAs[c] = buffer[(i + 5) + c];
                         for (int c = 0; c < 4; c++)
                             rot[c] = buffer[(i + 9) + c];
-
-                        foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clientQue)
-                        {
-                            if (entry.Value.ID == player)
-                            {
-                                entry.Value.Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
-                            }
-                            break;
-                        }
+                        lobby.GetPlayerInLobby(player).Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
+                        Console.WriteLine("({0}) - X:{1} Y:{2} R:{3}", player, FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));                                                
                     }
                     break;                
             }            
@@ -148,18 +135,18 @@ namespace ServerMA
         {
             List<byte> data = new List<byte>();
             data.Add((int)MessageType.Movement); // Message type byte
-            foreach (KeyValuePair<TcpClient, StarshipClientData> entry in clientQue)
+            foreach (StarshipClientData scd in lobby.PlayersInLobby)
             {   
-                data.Add((byte)entry.Value.ID); // Player number byte
-                foreach (byte b in FloatUnion.FloatToBytes(entry.Value.X))
+                data.Add((byte)scd.ID); // Player number byte
+                foreach (byte b in FloatUnion.FloatToBytes(scd.X))
                     data.Add(b);
-                foreach (byte b in FloatUnion.FloatToBytes(entry.Value.Y))
+                foreach (byte b in FloatUnion.FloatToBytes(scd.Y))
                     data.Add(b);
-                foreach (byte b in FloatUnion.FloatToBytes(entry.Value.Rotation))
+                foreach (byte b in FloatUnion.FloatToBytes(scd.Rotation))
                     data.Add(b);             
             }
             client.GetStream().Write(data.ToArray(), 0, data.Count);
-            client.GetStream().Flush();  
+            client.GetStream().Flush();
         }
 
         // change to delegates?
@@ -182,9 +169,10 @@ namespace ServerMA
             client.GetStream().Write(data.ToArray(), 0, data.Count);
             client.GetStream().Flush();
 
+
             foreach (byte b in data)
                 Console.Write(b.ToString());
-            Console.WriteLine("---");
+            Console.WriteLine(" - ({0})", ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString());
 
         }
 

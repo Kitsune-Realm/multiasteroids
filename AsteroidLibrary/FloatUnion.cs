@@ -35,5 +35,18 @@ namespace AsteroidLibrary
             if (bytes.Length != 4) throw new ArgumentException("You must provide four bytes.");
             return new FloatUnion { Byte0 = bytes[0], Byte1 = bytes[1], Byte2 = bytes[2], Byte3 = bytes[3] }.Value;
         }
+
+        public static float BytesToFloat(byte[] inputArray, int startIndex, int endIndex)
+        {
+            byte[] bytes = new byte[4];
+            int x = 0;
+            for(int i =startIndex; i<=endIndex; i++, x++)
+            {
+                bytes[x] = inputArray[i];
+            }
+
+            if (bytes.Length != 4) throw new ArgumentException("You must provide four bytes.");
+            return new FloatUnion { Byte0 = bytes[0], Byte1 = bytes[1], Byte2 = bytes[2], Byte3 = bytes[3] }.Value;
+        }
     }
 }

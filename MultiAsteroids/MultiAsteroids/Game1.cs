@@ -28,10 +28,7 @@ namespace MultiAsteroids
         private MenuItem menu_start;
         private MenuItem menu_exit;
         private MenuItem lobby_ready;
-        private SelectCursor selectCursor;
-
-        private bool lobbyFinished;
-        
+        private SelectCursor selectCursor;        
 
         SpriteFont font;
         
@@ -72,7 +69,6 @@ namespace MultiAsteroids
             this.menu_exit.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.menu_exit.Texture_on.Width / 2), (this.GraphicsDevice.Viewport.Height / 2)+40);
             this.lobby_ready = new MenuItem(Content, "menu_items/lobby_ready_on", "menu_items/lobby_ready_off");
             this.lobby_ready.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.lobby_ready.Texture_on.Width / 2), this.GraphicsDevice.Viewport.Height / 2);
-            this.lobbyFinished = false;
             spriteBatch = new SpriteBatch(GraphicsDevice);            
             player = new Starship(this.Content);  
 
@@ -104,8 +100,24 @@ namespace MultiAsteroids
                 player.MovementReset();
                 determineKeyboardInput();
                 player.MovementUpdate();
+                                
+                byte[] read = player.clientComm.Read();
+                if (read[0] == (int)MessageType.Movement)
+                {
+                    foreach (StarshipClientData scd in otherPlayers)
+                    {
+                        for (int i = 0; i <= otherPlayers.Count; i++)
+                        {
+                            if (read[1 + (13 * i)] == scd.ID)
+                            {
+                                scd.X = FloatUnion.BytesToFloat(read, 2 + (13 * i), 5 + (13 * i));
+                                scd.Y = FloatUnion.BytesToFloat(read, 6 + (13 * i), 9 + (13 * i));
+                                scd.Rotation = FloatUnion.BytesToFloat(read, 10 + (13 * i), 13 + (13 * i));
+                            }
+                        }
+                    }                    
+                }
                 player.Transmit();
-                readTransmitDataOtherPlayers();
                 updateProjectiles(gameTime);
             }
             else if (this.gameState == GameState.StartMenu)
@@ -135,8 +147,20 @@ namespace MultiAsteroids
                         if (read[i] != 1)
                             ready = false;
                     }
-                    if(ready)
+                    if (ready)
+                    {
+                        for (int i = 1; i <= read[1]; i++)
+                        {
+                            if (i != this.player.PlayerNumber)
+                                this.otherPlayers.Add(new StarshipClientData(i));
+                        }
+                        this.player.clientComm.amountPlayers = otherPlayers.Count + 1;
+                        if (player.PlayerNumber == 1)
+                            player.UpdatePosition(111f, 111f, 2f);
+                        if (player.PlayerNumber == 2)
+                            player.UpdatePosition(374f, 246f, 4f);
                         this.gameState = GameState.Playing;
+                    }
                     
                 }                 
             }
@@ -162,7 +186,13 @@ namespace MultiAsteroids
                     }
                 }
                 drawStatistics();
+                // draw the ship of the player
                 spriteBatch.Draw(player.ShipTexture, player.Position, null, Color.White, player.RotationAngle, player.Origin, 1.0f, SpriteEffects.None, 0f);
+                // draw other ships
+                foreach (StarshipClientData scd in otherPlayers)
+                {
+                    spriteBatch.Draw(player.ShipTexture, new Vector2(scd.X, scd.Y), null, Color.White, scd.Rotation, player.Origin, 1.0f, SpriteEffects.None, 0f);
+                }
             }
             else if (this.gameState == GameState.StartMenu)
             {

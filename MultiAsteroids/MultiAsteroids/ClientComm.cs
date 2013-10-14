@@ -15,6 +15,7 @@ namespace MultiAsteroids
         public int Port = 5938;
         public TcpClient client;
         public bool isListening { get; set; }
+        public int amountPlayers { get; set; }
 
         public ClientComm()
         {
@@ -25,6 +26,7 @@ namespace MultiAsteroids
         {
             client = new TcpClient("127.0.0.1", Port);
             client.ReceiveTimeout = 10;
+            client.SendTimeout = 10;
             this.isListening = true;
         }
 
@@ -52,13 +54,13 @@ namespace MultiAsteroids
             {
                 // ID, AmountPlayers, P1, P2, P3, P4
                 case (int)MessageType.PlayerReadyStatus:
-                    for (int i = 0; i < 6; i++ )
-                    {
-                        data.Add(buffer[i]);
-                    }
+                    for (int i = 0; i < 6; i++ )                    
+                        data.Add(buffer[i]);                    
                     return data.ToArray();
                 case (int)MessageType.Movement:
-                    return null;
+                    for (int i = 0; i < 1+(13*amountPlayers); i++)                    
+                        data.Add(buffer[i]);                    
+                    return data.ToArray();
             }
             return null;        
         }

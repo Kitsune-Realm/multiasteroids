@@ -82,6 +82,9 @@ namespace MultiAsteroids
 
         public void UpdatePosition(float x, float y, float rotation)
         {
+            this.X = x;
+            this.Y = y;
+            this.RotationAngle = rotation;
             this.Position = new Vector2(x, y);
             this.RotationAngle = rotation;
         }
