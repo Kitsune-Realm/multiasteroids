@@ -38,6 +38,17 @@ namespace ServerMA
             return null;
         }
 
+        public StarshipClientData[] GetOtherPlayersInLobby(int playerNumber)
+        {
+            List<StarshipClientData> localArray = new List<StarshipClientData>();
+            foreach (StarshipClientData scd in PlayersInLobby)
+            {
+                if (scd.ID != playerNumber)
+                    localArray.Add(scd);
+            }
+            return localArray.ToArray();
+        }
+
         public bool CheckAllPlayersReady()
         {
             foreach (StarshipClientData scd in PlayersInLobby)

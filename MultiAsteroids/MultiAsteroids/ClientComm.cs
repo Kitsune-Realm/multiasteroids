@@ -79,6 +79,10 @@ namespace MultiAsteroids
                     for (int i = 0; i < 1+(13*amountPlayers); i++)                    
                         data.Add(buffer[i]);                    
                     return data.ToArray();
+                case (int)MessageType.ServerSendsFired:
+                    for (int i = 0; i < 15; i++)
+                        data.Add(buffer[i]);
+                    return data.ToArray();
             }
             return null;        
         }

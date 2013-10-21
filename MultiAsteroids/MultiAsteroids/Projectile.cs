@@ -23,6 +23,7 @@ namespace MultiAsteroids
         public Texture2D Texture { get; set; }
         public SoundEffect soundEffect { get; set; }
         public ProjectileType Type { get; set; }
+        public int OwnerPlayerNumber { get; set; }
 
         public float Timer = 0;
         public float Interval = 40f;
@@ -32,7 +33,7 @@ namespace MultiAsteroids
         public int AmountImages = 6;
         public Rectangle SpriteRectangle;
 
-        public Projectile(ContentManager content)
+        public Projectile(ContentManager content, int OwningPlayerNumber)
         {
             this.IsAlive = false;          
             this.Position = new Vector2(50, 50);
@@ -44,7 +45,26 @@ namespace MultiAsteroids
             this.SpriteHeight = Texture.Height;
             this.SpriteRectangle = new Rectangle(CurrentFrame * SpriteWidth, 0, SpriteWidth, SpriteHeight);
             this.Type = ProjectileType.Plasma;
+            this.OwnerPlayerNumber = OwningPlayerNumber;
 
+            this.soundEffect = content.Load<SoundEffect>("sounds/projectile_1_fire");
+        }
+
+        public Projectile(ContentManager content, int OwningPlayerNumber, float X, float Y, float Rot)
+        {
+            this.IsAlive = true;
+            this.Position = new Vector2(X, Y);
+            this.RotationAngle = Rot;
+
+            this.Velocity = 10;
+            this.Texture = content.Load<Texture2D>("green_projectile_sheet");
+            this.Origin = new Vector2((this.Texture.Width / AmountImages) / 2, this.Texture.Height / 2);
+
+            this.SpriteWidth = Texture.Width / AmountImages;
+            this.SpriteHeight = Texture.Height;
+            this.SpriteRectangle = new Rectangle(CurrentFrame * SpriteWidth, 0, SpriteWidth, SpriteHeight);
+            this.Type = ProjectileType.Plasma;
+            this.OwnerPlayerNumber = OwningPlayerNumber;
             this.soundEffect = content.Load<SoundEffect>("sounds/projectile_1_fire");
         }
 

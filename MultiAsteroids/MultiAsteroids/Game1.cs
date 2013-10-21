@@ -27,11 +27,12 @@ namespace MultiAsteroids
         private MenuItem menu_start;
         private MenuItem menu_exit;
         private MenuItem lobby_ready;
-        private SelectCursor selectCursor;        
-
+        private SelectCursor selectCursor;
+        
         SpriteFont font;
         
         Starship player;
+        private List<Projectile> otherProjectiles = new List<Projectile>();
         public event PlayerFiredHandler PlayerFired;
 
         public Game1()
@@ -102,20 +103,30 @@ namespace MultiAsteroids
                 player.MovementUpdate();
                                 
                 byte[] read = player.clientComm.Read();
-                if (read[0] == (int)MessageType.Movement)
+
+                switch(read[0])
                 {
-                    foreach (StarshipClientData scd in otherPlayers)
-                    {
-                        for (int i = 0; i <= otherPlayers.Count; i++)
+                    case (int)MessageType.Movement:                
+                        foreach (StarshipClientData scd in otherPlayers)
                         {
-                            if (read[1 + (13 * i)] == scd.ID)
+                            for (int i = 0; i <= otherPlayers.Count; i++)
                             {
-                                scd.X = FloatUnion.BytesToFloat(read, 2 + (13 * i), 5 + (13 * i));
-                                scd.Y = FloatUnion.BytesToFloat(read, 6 + (13 * i), 9 + (13 * i));
-                                scd.Rotation = FloatUnion.BytesToFloat(read, 10 + (13 * i), 13 + (13 * i));
+                                if (read[1 + (13 * i)] == scd.ID)
+                                {
+                                    scd.X = FloatUnion.BytesToFloat(read, 2 + (13 * i), 5 + (13 * i));
+                                    scd.Y = FloatUnion.BytesToFloat(read, 6 + (13 * i), 9 + (13 * i));
+                                    scd.Rotation = FloatUnion.BytesToFloat(read, 10 + (13 * i), 13 + (13 * i));
+                                }
                             }
                         }
-                    }                    
+                        break;
+                    case (int)MessageType.ServerSendsFired:
+                        float X = FloatUnion.BytesToFloat(read, 3, 6);
+                        float Y = FloatUnion.BytesToFloat(read, 7, 10);
+                        float Rot = FloatUnion.BytesToFloat(read, 11, 14);
+                        Projectile proj = new Projectile(this.Content, read[1], X, Y, Rot);
+                         otherProjectiles.Add(proj);
+                        break;
                 }
                 player.Transmit();
                 updateProjectiles(gameTime);
@@ -295,6 +306,28 @@ namespace MultiAsteroids
                     float y = (float)(Math.Cos(projectile.RotationAngle) * projectile.Velocity);
                     projectile.UpdatePosition(x, y);
                     //Console.WriteLine("X:{0} Y:{1} R:{2}", projectile.Position.X, projectile.Position.Y, projectile.RotationAngle);
+
+                    if (projectile.Position.X < 0 || projectile.Position.X > GraphicsDevice.Viewport.Width || projectile.Position.Y < 0 || projectile.Position.Y > GraphicsDevice.Viewport.Height)
+                        projectile.IsAlive = false;
+                }
+            }
+            // CHANGE INTO SINGLE METHOD DOUBLE CODE HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            foreach (Projectile projectile in this.otherProjectiles)
+            {
+                if (projectile.IsAlive)
+                {
+                    projectile.Timer += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+                    if (projectile.Timer >= projectile.Interval)
+                    {
+                        projectile.Timer = 0;
+                        projectile.CurrentFrame++;
+                        projectile.CurrentFrame %= projectile.AmountImages;
+                    }
+                    projectile.SpriteRectangle.X = projectile.CurrentFrame * projectile.SpriteWidth;
+
+                    float x = (float)(Math.Sin(projectile.RotationAngle) * projectile.Velocity);
+                    float y = (float)(Math.Cos(projectile.RotationAngle) * projectile.Velocity);
+                    projectile.UpdatePosition(x, y);
 
                     if (projectile.Position.X < 0 || projectile.Position.X > GraphicsDevice.Viewport.Width || projectile.Position.Y < 0 || projectile.Position.Y > GraphicsDevice.Viewport.Height)
                         projectile.IsAlive = false;

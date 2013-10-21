@@ -11,6 +11,7 @@ namespace AsteroidLibrary
         Movement = 1,
         AddedClient = 2,
         PlayerReadyStatus = 3,
-        PlayerFired = 4
+        PlayerFired = 4,
+        ServerSendsFired = 5
     }
 }

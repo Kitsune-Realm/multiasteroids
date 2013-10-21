@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net.Sockets;
 
 namespace AsteroidLibrary
 {
@@ -12,12 +13,11 @@ namespace AsteroidLibrary
         public float Rotation { get; set; }
         public int ID { get; set; }
         public bool isReady { get; set; }
-      
 
         public StarshipClientData(int id)
         {
             this.ID = id;
-            this.isReady = false;
+            this.isReady = false;        
         }
 
         public void Update(float x, float y, float rotation)

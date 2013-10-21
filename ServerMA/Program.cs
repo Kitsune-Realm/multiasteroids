@@ -20,7 +20,9 @@ namespace ServerMA
         private List<TcpClient> clients;
         private int clientId;
         private int lobbyId;
-        private Lobby lobby;        
+        private Lobby lobby;
+
+        private bool mlock = false;
 
         static void Main(string[] args)
         {
@@ -77,9 +79,9 @@ namespace ServerMA
             while (running)
             {
                 try
-                {                    
+                {                           
+                    readIncomingMessage(client);
                     writeMovementMessage(client);
-                    readIncomingMessage(client);                    
                 }
                 catch (Exception ex)
                 {
@@ -144,7 +146,16 @@ namespace ServerMA
 
                     Console.WriteLine("Player {0} fired a {1} projectile at X: {2}, Y: {3}, R: {4}", playerNumber, ((ProjectileType)projectileType).ToString(),
                         FloatUnion.BytesToFloat(xProj), FloatUnion.BytesToFloat(yProj), FloatUnion.BytesToFloat(rProj));
-
+                    mlock = true;
+                    foreach (TcpClient c in clients)
+                    {
+                        if (c != client)
+                        {
+                            buffer[0] = (byte)MessageType.ServerSendsFired;
+                            c.GetStream().Write(buffer, 0, 15);
+                            // Client can never recieve this for some reason
+                        }
+                    }
                     break;
             }            
         }
@@ -164,7 +175,7 @@ namespace ServerMA
                     data.Add(b);             
             }
             client.GetStream().Write(data.ToArray(), 0, data.Count);
-            client.GetStream().Flush();
+            //client.GetStream().Flush();
         }
 
         // change to delegates?

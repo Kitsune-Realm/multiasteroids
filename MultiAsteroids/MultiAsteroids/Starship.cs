@@ -126,7 +126,7 @@ namespace MultiAsteroids
         {
             for (int i = 0; i < projectiles.Length; i++)
             {
-                projectiles[i] = new Projectile(content);
+                projectiles[i] = new Projectile(content, this.PlayerNumber);
             }
         }
 
