@@ -37,7 +37,7 @@ namespace MultiAsteroids
 
         public event EventHandler PositionChanged;
 
-        public Starship(ContentManager content)
+        public Starship(ContentManager content, Game1 game)
         {
             this.projectiles = new Projectile[3];
             fillProjectiles(content);
@@ -50,7 +50,7 @@ namespace MultiAsteroids
             this.BackVelocity = 2;
             this.PositionChanged += new EventHandler(Starship_PositionChanged);
             this.IsAlive = true;
-            this.clientComm = new ClientComm();
+            this.clientComm = new ClientComm(game);
             this.isReady = false;
 
             this.ShipTexture = content.Load<Texture2D>("ship_texture_breen");

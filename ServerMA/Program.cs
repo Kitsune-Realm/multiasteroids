@@ -79,7 +79,7 @@ namespace ServerMA
                 try
                 {                    
                     writeMovementMessage(client);
-                    readMovementMessage(client);                    
+                    readIncomingMessage(client);                    
                 }
                 catch (Exception ex)
                 {
@@ -105,9 +105,9 @@ namespace ServerMA
                 Console.WriteLine("ERROR({0}): cannot enter lobby", clientIp);            
         }
 
-        private void readMovementMessage(TcpClient client)
+        private void readIncomingMessage(TcpClient client)
         {
-            byte[] buffer = new byte[(lobby.PlayersInLobby.Count * 13) + 1];
+            byte[] buffer = new byte[256]; // (lobby.PlayersInLobby.Count * 13) + 1
             client.GetStream().Read(buffer, 0, buffer.Length);            
             switch ((int)buffer[0])
             {
@@ -125,9 +125,27 @@ namespace ServerMA
                         for (int c = 0; c < 4; c++)
                             rot[c] = buffer[(i + 9) + c];
                         lobby.GetPlayerInLobby(player).Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
-                        Console.WriteLine("({0}) - X:{1} Y:{2} R:{3}", player, FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));                                                
+                        //Console.WriteLine("({0}) - X:{1} Y:{2} R:{3}", player, FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));                                                
                     }
-                    break;                
+                    break;
+                case (int)MessageType.PlayerFired:
+                    byte[] xProj = new byte[4];
+                    byte[] yProj = new byte[4];
+                    byte[] rProj = new byte[4];
+                    int playerNumber = buffer[1];
+                    int projectileType = buffer[2];
+                                        
+                    for (int c = 0; c < 4; c++)
+                        xProj[c] = buffer[c + 3];
+                    for (int c = 0; c < 4; c++)
+                        yProj[c] = buffer[c + 7];
+                    for (int c = 0; c < 4; c++)
+                        rProj[c] = buffer[c + 11];
+
+                    Console.WriteLine("Player {0} fired a {1} projectile at X: {2}, Y: {3}, R: {4}", playerNumber, ((ProjectileType)projectileType).ToString(),
+                        FloatUnion.BytesToFloat(xProj), FloatUnion.BytesToFloat(yProj), FloatUnion.BytesToFloat(rProj));
+
+                    break;
             }            
         }
 
@@ -170,9 +188,9 @@ namespace ServerMA
             client.GetStream().Flush();
 
 
-            foreach (byte b in data)
-                Console.Write(b.ToString());
-            Console.WriteLine(" - ({0})", ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString());
+            //foreach (byte b in data)
+            //    Console.Write(b.ToString());
+            //Console.WriteLine(" - ({0})", ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString());
 
         }
 

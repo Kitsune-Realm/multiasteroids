@@ -10,6 +10,7 @@ using System.IO;
 
 namespace MultiAsteroids
 {
+
     class ClientComm
     {
         public int Port = 5938;
@@ -17,10 +18,11 @@ namespace MultiAsteroids
         public bool isListening { get; set; }
         public int amountPlayers { get; set; }
 
-        public ClientComm()
+        public ClientComm(Game1 game)
         {
             this.isListening = false;
-        }
+            game.PlayerFired += new PlayerFiredHandler(game_PlayerFired);
+        }        
 
         public void StartListening()
         {
@@ -40,6 +42,22 @@ namespace MultiAsteroids
             foreach (byte b in FloatUnion.FloatToBytes(y))
                 data.Add(b);
             foreach (byte b in FloatUnion.FloatToBytes(rotation))
+                data.Add(b);
+
+            this.client.GetStream().Write(data.ToArray(), 0, data.Count);
+        }
+
+        void game_PlayerFired(int playerNum, Projectile projectile)
+        {
+            List<byte> data = new List<byte>();
+            data.Add((int)MessageType.PlayerFired);
+            data.Add((byte)playerNum);
+            data.Add((byte)projectile.Type);
+            foreach (byte b in FloatUnion.FloatToBytes(projectile.Position.X))
+                data.Add(b);
+            foreach (byte b in FloatUnion.FloatToBytes(projectile.Position.Y))
+                data.Add(b);
+            foreach (byte b in FloatUnion.FloatToBytes(projectile.RotationAngle))
                 data.Add(b);
 
             this.client.GetStream().Write(data.ToArray(), 0, data.Count);
@@ -79,6 +97,6 @@ namespace MultiAsteroids
                 }
             }
             return localIP;
-        }       
+        }
     }
 }

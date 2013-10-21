@@ -13,9 +13,8 @@ using System.Collections;
 
 namespace MultiAsteroids
 {
-    /// <summary>
-    /// This is the main type for your game
-    /// </summary>
+    public delegate void PlayerFiredHandler(int playerNum, Projectile projectile);
+
     public class Game1 : Microsoft.Xna.Framework.Game
     {
         GraphicsDeviceManager graphics;
@@ -33,6 +32,7 @@ namespace MultiAsteroids
         SpriteFont font;
         
         Starship player;
+        public event PlayerFiredHandler PlayerFired;
 
         public Game1()
         {
@@ -70,10 +70,10 @@ namespace MultiAsteroids
             this.lobby_ready = new MenuItem(Content, "menu_items/lobby_ready_on", "menu_items/lobby_ready_off");
             this.lobby_ready.position = new Vector2(((this.GraphicsDevice.Viewport.Width / 2) - this.lobby_ready.Texture_on.Width / 2), this.GraphicsDevice.Viewport.Height / 2);
             spriteBatch = new SpriteBatch(GraphicsDevice);            
-            player = new Starship(this.Content);  
+            player = new Starship(this.Content, this);
 
             this.gameState = GameState.StartMenu;            
-        }        
+        }               
 
         /// <summary>
         /// UnloadContent will be called once per game and is the place to unload
@@ -217,7 +217,10 @@ namespace MultiAsteroids
             if (this.gameState == GameState.Playing)
             {
                 if (newState.IsKeyDown(Keys.Space))
-                    fireProjectile();
+                    if (!oldState.IsKeyDown(Keys.Space))
+                    {
+                        fireProjectile();                        
+                    }
                 // Up, Left and Space causes bug, Space wont work then...
                 if (newState.IsKeyDown(Keys.W))
                     player.MoveForward = true;
@@ -303,12 +306,17 @@ namespace MultiAsteroids
         {
             foreach (Projectile projectile in player.projectiles)
             {
-                if (!projectile.IsAlive)
+                if (!projectile.IsAlive &&
+                    player.Position.X < GraphicsDevice.Viewport.Width &&
+                    player.Position.X > 0 &&
+                    player.Position.Y < GraphicsDevice.Viewport.Height &&
+                    player.Position.Y > 0)
                 {
                     projectile.soundEffect.Play();
                     projectile.IsAlive = true;
                     projectile.RotationAngle = player.RotationAngle;
                     projectile.Position = player.Position;
+                    OnPlayerFired(player.PlayerNumber, projectile);
                     break;
                 }                    
             }
@@ -382,6 +390,13 @@ namespace MultiAsteroids
                     }                    
                 }
             }
+        }
+
+        protected virtual void OnPlayerFired(int playerNum, Projectile proj)
+        {
+            PlayerFiredHandler handler = PlayerFired;
+            if (handler != null)
+                handler(playerNum, proj);
         }
     }
 }

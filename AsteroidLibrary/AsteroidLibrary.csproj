@@ -40,9 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClientAddedMessage.cs" />
     <Compile Include="FloatUnion.cs" />
     <Compile Include="MessageType.cs" />
+    <Compile Include="ProjectileType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StarshipClientData.cs" />
   </ItemGroup>

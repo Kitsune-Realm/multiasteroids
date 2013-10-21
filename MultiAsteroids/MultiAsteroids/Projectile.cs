@@ -9,10 +9,11 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using AsteroidLibrary;
 
 namespace MultiAsteroids
 {
-    class Projectile
+    public class Projectile
     {
         public Vector2 Position { get; set; }
         public bool IsAlive { get; set; }
@@ -21,6 +22,7 @@ namespace MultiAsteroids
         public Vector2 Origin { get; set; }
         public Texture2D Texture { get; set; }
         public SoundEffect soundEffect { get; set; }
+        public ProjectileType Type { get; set; }
 
         public float Timer = 0;
         public float Interval = 40f;
@@ -41,6 +43,7 @@ namespace MultiAsteroids
             this.SpriteWidth = Texture.Width / AmountImages;
             this.SpriteHeight = Texture.Height;
             this.SpriteRectangle = new Rectangle(CurrentFrame * SpriteWidth, 0, SpriteWidth, SpriteHeight);
+            this.Type = ProjectileType.Plasma;
 
             this.soundEffect = content.Load<SoundEffect>("sounds/projectile_1_fire");
         }

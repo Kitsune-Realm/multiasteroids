@@ -10,6 +10,7 @@ namespace AsteroidLibrary
         EndOfMessage = 0,
         Movement = 1,
         AddedClient = 2,
-        PlayerReadyStatus = 3
+        PlayerReadyStatus = 3,
+        PlayerFired = 4
     }
 }
