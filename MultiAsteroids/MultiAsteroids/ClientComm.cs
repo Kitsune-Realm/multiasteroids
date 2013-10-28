@@ -69,20 +69,25 @@ namespace MultiAsteroids
         {
             byte[] buffer = new byte[client.ReceiveBufferSize]; // These buffers are humongeously huge... noob
             List<byte> data = new List<byte>();
-            client.GetStream().Read(buffer, 0, client.ReceiveBufferSize);
-            switch ((int)buffer[0])
+            try
             {
-                // ID, AmountPlayers, P1, P2, P3, P4
-                case (int)MessageType.PlayerReadyStatus:
-                    for (int i = 0; i < 6; i++ )                    
-                        data.Add(buffer[i]);                    
-                    return data.ToArray();
-                case (int)MessageType.Movement:
-                    for (int i = 0; i < 1+(13*amountPlayers); i++)                    
-                        data.Add(buffer[i]);                    
-                    return data.ToArray();                
+                client.GetStream().Read(buffer, 0, client.ReceiveBufferSize);
+                switch ((int)buffer[0])
+                {
+                    // ID, AmountPlayers, P1, P2, P3, P4
+                    case (int)MessageType.PlayerReadyStatus:
+                        for (int i = 0; i < 6; i++)
+                            data.Add(buffer[i]);
+                        return data.ToArray();
+                    case (int)MessageType.Movement:
+                        for (int i = 0; i < 1 + (13 * amountPlayers); i++)
+                            data.Add(buffer[i]);
+                        return data.ToArray();
+                }
+                
             }
-            return null;        
+            catch { }
+            return null;
         }
 
         public byte[] ReadProjectiles()
