@@ -14,7 +14,9 @@ namespace MultiAsteroids
     class ClientComm
     {
         public int Port = 5938;
+        public int PortProjectiles = 5937;
         public TcpClient client;
+        public TcpClient clientProjectiles;
         public bool isListening { get; set; }
         public int amountPlayers { get; set; }
 
@@ -22,15 +24,19 @@ namespace MultiAsteroids
         {
             this.isListening = false;
             game.PlayerFired += new PlayerFiredHandler(game_PlayerFired);
+
+            clientProjectiles = new TcpClient("127.0.0.1", PortProjectiles);
+            clientProjectiles.ReceiveTimeout = 1;
+            clientProjectiles.SendTimeout = 1;
         }        
 
         public void StartListening()
         {
             client = new TcpClient("127.0.0.1", Port);
             client.ReceiveTimeout = 10;
-            client.SendTimeout = 10;
+            client.SendTimeout = 10;           
             this.isListening = true;
-        }
+        }        
 
         public void Send(int playerNumber, float x, float y, float rotation)
         {
@@ -60,7 +66,7 @@ namespace MultiAsteroids
             foreach (byte b in FloatUnion.FloatToBytes(projectile.RotationAngle))
                 data.Add(b);
 
-            this.client.GetStream().Write(data.ToArray(), 0, data.Count);
+            this.clientProjectiles.GetStream().Write(data.ToArray(), 0, data.Count);
         }
 
         public byte[] Read()
@@ -78,13 +84,31 @@ namespace MultiAsteroids
                 case (int)MessageType.Movement:
                     for (int i = 0; i < 1+(13*amountPlayers); i++)                    
                         data.Add(buffer[i]);                    
-                    return data.ToArray();
-                case (int)MessageType.ServerSendsFired:
-                    for (int i = 0; i < 15; i++)
-                        data.Add(buffer[i]);
-                    return data.ToArray();
+                    return data.ToArray();                
             }
             return null;        
+        }
+
+        public byte[] ReadProjectiles()
+        {
+            try
+            {
+                byte[] buffer = new byte[clientProjectiles.ReceiveBufferSize];
+                List<byte> data = new List<byte>();
+                clientProjectiles.GetStream().Read(buffer, 0, clientProjectiles.ReceiveBufferSize);
+                switch ((int)buffer[0])
+                {
+                    case (int)MessageType.ServerSendsFired:
+                        for (int i = 0; i < 15; i++)
+                            data.Add(buffer[i]);
+                        return data.ToArray();
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            return null;
         }
 
         [Obsolete]

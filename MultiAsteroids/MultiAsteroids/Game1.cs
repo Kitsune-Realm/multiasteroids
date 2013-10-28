@@ -102,7 +102,7 @@ namespace MultiAsteroids
                 determineKeyboardInput();
                 player.MovementUpdate();
                                 
-                byte[] read = player.clientComm.Read();
+                byte[] read = player.clientComm.Read();                
 
                 switch(read[0])
                 {
@@ -129,6 +129,12 @@ namespace MultiAsteroids
                         break;
                 }
                 player.Transmit();
+
+                byte[] projectilesRead = player.clientComm.ReadProjectiles();
+                if (projectilesRead != null)
+                    Console.WriteLine("test");
+
+                
                 updateProjectiles(gameTime);
             }
             else if (this.gameState == GameState.StartMenu)
