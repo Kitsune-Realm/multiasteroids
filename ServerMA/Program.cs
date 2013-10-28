@@ -20,7 +20,8 @@ namespace ServerMA
         private List<TcpClient> clients;
         private int clientId;
         private int lobbyId;
-        private Lobby lobby;    
+        private Lobby lobby;
+        private List<ProjectileData> projectiles;
 
         static void Main(string[] args)
         {
@@ -32,6 +33,7 @@ namespace ServerMA
         {
             Console.WriteLine("Server for MultiAsteroids game");
             this.clients = new List<TcpClient>();
+            this.projectiles = new List<ProjectileData>();
             this.clientId = 1;
             this.lobbyId = 1;
             lobby = new Lobby(lobbyId);
@@ -88,7 +90,10 @@ namespace ServerMA
             {    
                 try
                 {
-                    writeMovementMessage(client);
+                    if (projectiles.Count > 0)
+                        writeProjectiles(client);
+                    else
+                        writeMovementMessage(client);
                     readIncomingMessage(client);
                 }
                 catch (Exception ex)
@@ -97,52 +102,32 @@ namespace ServerMA
                     running = false;
                 }
             }
-        }
+        }       
 
-        private void handleProjectilesThread(object obj)
+        private void writeProjectiles(TcpClient client)
         {
-            Console.WriteLine("THREAD - Listening for Projectiles");
-            TcpClient client = obj as TcpClient;
-            bool running = true;
-            while (running)
+            foreach (ProjectileData pd in projectiles)
             {
-                byte[] buffer = new byte[256]; // (lobby.PlayersInLobby.Count * 13) + 1
-                client.GetStream().Read(buffer, 0, buffer.Length);
-                Console.WriteLine("Projectile heard");
-                switch ((int)buffer[0])
+                foreach (TcpClient cl in clients)
                 {
-                    case (int)MessageType.PlayerFired:
-                        byte[] xProj = new byte[4];
-                        byte[] yProj = new byte[4];
-                        byte[] rProj = new byte[4];
-                        int playerNumber = buffer[1];
-                        int projectileType = buffer[2];
-
-                        for (int c = 0; c < 4; c++)
-                            xProj[c] = buffer[c + 3];
-                        for (int c = 0; c < 4; c++)
-                            yProj[c] = buffer[c + 7];
-                        for (int c = 0; c < 4; c++)
-                            rProj[c] = buffer[c + 11];
-
-                        Console.WriteLine("Player {0} fired a {1} projectile at X: {2}, Y: {3}, R: {4}", playerNumber, ((ProjectileType)projectileType).ToString(),
-                            FloatUnion.BytesToFloat(xProj), FloatUnion.BytesToFloat(yProj), FloatUnion.BytesToFloat(rProj));
-                        break;
-                }
-
-                foreach (TcpClient c in clients)
-                {
-                    if (c != client)
+                    if (pd.Owner != cl) // !=
                     {
+                        List<byte> data = new List<byte>();
                         Console.WriteLine("Sending Projectile data to other player");
-                        buffer[0] = (byte)MessageType.ServerSendsFired;
-                        c.GetStream().Flush();
-                        c.GetStream().Write(buffer, 0, 15);
-                        // Client can never recieve this for some reason
+
+                        data.Add((int)MessageType.ServerSendsFired);
+                        foreach (byte b in FloatUnion.FloatToBytes(pd.X))
+                            data.Add(b);
+                        foreach (byte b in FloatUnion.FloatToBytes(pd.Y))
+                            data.Add(b);
+                        foreach (byte b in FloatUnion.FloatToBytes(pd.RotationAngle))
+                            data.Add(b);
+
+                        cl.GetStream().Write(data.ToArray(), 0, data.Count);
                     }
-                }
+                }                
             }
-            Console.WriteLine("Thread complete");
+            projectiles.Clear();
         }
 
         private void updateLobby(StarshipClientData clientData, string clientIp)
@@ -185,9 +170,22 @@ namespace ServerMA
                     }
                     break; 
                 case (int)MessageType.PlayerFired:
-                    {
-                        Console.WriteLine("player shot");
-                    }
+                    byte[] xProj = new byte[4];
+                    byte[] yProj = new byte[4];
+                    byte[] rProj = new byte[4];
+                    int playerNumber = buffer[1];
+                    int projectileType = buffer[2];
+
+                    for (int c = 0; c < 4; c++)
+                        xProj[c] = buffer[c + 3];
+                    for (int c = 0; c < 4; c++)
+                        yProj[c] = buffer[c + 7];
+                    for (int c = 0; c < 4; c++)
+                        rProj[c] = buffer[c + 11];
+
+                    Console.WriteLine("Player {0} fired a {1} projectile at X: {2}, Y: {3}, R: {4}", playerNumber, ((ProjectileType)projectileType).ToString(),
+                        FloatUnion.BytesToFloat(xProj), FloatUnion.BytesToFloat(yProj), FloatUnion.BytesToFloat(rProj));
+                     projectiles.Add(new ProjectileData(FloatUnion.BytesToFloat(xProj), FloatUnion.BytesToFloat(yProj), FloatUnion.BytesToFloat(rProj), client));
                     break;
             }            
         }

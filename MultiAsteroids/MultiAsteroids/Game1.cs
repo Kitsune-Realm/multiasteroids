@@ -102,12 +102,11 @@ namespace MultiAsteroids
                 player.MovementReset();
                 determineKeyboardInput();
                 player.MovementUpdate();
-                                
-                byte[] read = player.clientComm.Read();                
-
-                switch(read[0])
+                                              
+                byte[] read = player.clientComm.Read();
+                switch (read[0])
                 {
-                    case (int)MessageType.Movement:                
+                    case (int)MessageType.Movement:
                         foreach (StarshipClientData scd in otherPlayers)
                         {
                             for (int i = 0; i <= otherPlayers.Count; i++)
@@ -122,13 +121,15 @@ namespace MultiAsteroids
                         }
                         break;
                     case (int)MessageType.ServerSendsFired:
-                        float X = FloatUnion.BytesToFloat(read, 3, 6);
-                        float Y = FloatUnion.BytesToFloat(read, 7, 10);
-                        float Rot = FloatUnion.BytesToFloat(read, 11, 14);
+                        float X = FloatUnion.BytesToFloat(read, 1, 4);
+                        float Y = FloatUnion.BytesToFloat(read, 5, 8);
+                        float Rot = FloatUnion.BytesToFloat(read, 9, 12);
                         Projectile proj = new Projectile(this.Content, read[1], X, Y, Rot);
-                         otherProjectiles.Add(proj);
+                        proj.IsAlive = true;
+                        otherProjectiles.Add(proj);
                         break;
                 }
+                
                 player.Transmit();
 
                 /*byte[] projectilesRead = player.clientComm.ReadProjectiles();
@@ -156,11 +157,12 @@ namespace MultiAsteroids
                 readyData[2] = (byte)player.PlayerNumber;
 
                 player.clientComm.client.GetStream().Write(readyData,0,3);
+
                 byte[] read = player.clientComm.Read();
                 if (read[0] == (int)MessageType.PlayerReadyStatus)
                 {
                     bool ready = true;
-                    for (int i = 2; i < read[1]+2; i++)
+                    for (int i = 2; i < read[1] + 2; i++)
                     {
                         if (read[i] != 1)
                             ready = false;
@@ -179,8 +181,7 @@ namespace MultiAsteroids
                             player.UpdatePosition(374f, 246f, 4f);
                         this.gameState = GameState.Playing;
                     }
-                    
-                }                 
+                }                
             }
             base.Update(gameTime);
         }
@@ -197,6 +198,14 @@ namespace MultiAsteroids
             {
                 GraphicsDevice.Clear(Color.Black);
                 foreach (Projectile projectile in player.projectiles)
+                {
+                    if (projectile.IsAlive)
+                    {
+                        spriteBatch.Draw(projectile.Texture, new Rectangle((int)projectile.Position.X, (int)projectile.Position.Y, projectile.SpriteWidth, projectile.SpriteHeight), projectile.SpriteRectangle, Color.White, projectile.RotationAngle, projectile.Origin, SpriteEffects.None, 0f);
+                    }
+                }
+
+                foreach (Projectile projectile in otherProjectiles)
                 {
                     if (projectile.IsAlive)
                     {
@@ -319,7 +328,7 @@ namespace MultiAsteroids
                 }
             }
             // CHANGE INTO SINGLE METHOD DOUBLE CODE HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            foreach (Projectile projectile in this.otherProjectiles)
+            foreach (Projectile projectile in otherProjectiles)
             {
                 if (projectile.IsAlive)
                 {
@@ -427,9 +436,9 @@ namespace MultiAsteroids
                     {
                         if (scd.ID == playerId)
                             scd.Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
-                    }                    
+                    }
                 }
-            }
+            }           
         }
 
         protected virtual void OnPlayerFired(int playerNum, Projectile proj)

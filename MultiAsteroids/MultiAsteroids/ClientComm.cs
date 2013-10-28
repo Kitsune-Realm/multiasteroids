@@ -14,9 +14,7 @@ namespace MultiAsteroids
     class ClientComm
     {
         public int Port = 5938;
-        public int PortProjectiles = 5937;
-        public TcpClient client;
-        public TcpClient clientProjectiles;
+        public TcpClient client;        
         public bool isListening { get; set; }
         public int amountPlayers { get; set; }
 
@@ -28,7 +26,7 @@ namespace MultiAsteroids
 
         public void StartListening()
         {
-            client = new TcpClient("145.102.67.200", Port);
+            client = new TcpClient("127.0.0.1", Port);
             client.ReceiveTimeout = 10;
             client.SendTimeout = 10;           
             this.isListening = true;
@@ -67,50 +65,38 @@ namespace MultiAsteroids
 
         public byte[] Read()
         {
+            
             byte[] buffer = new byte[client.ReceiveBufferSize]; // These buffers are humongeously huge... noob
             List<byte> data = new List<byte>();
+            int bytesRead = 0;
             try
-            {
-                client.GetStream().Read(buffer, 0, client.ReceiveBufferSize);
-                switch ((int)buffer[0])
+            {                
+                int totalBytesRead = client.GetStream().Read(buffer, 0, buffer.Length);
+
+                switch ((int)buffer[bytesRead])
                 {
                     // ID, AmountPlayers, P1, P2, P3, P4
                     case (int)MessageType.PlayerReadyStatus:
-                        for (int i = 0; i < 6; i++)
+                        for (int i = 0 + bytesRead; i < 6 + bytesRead; i++)
                             data.Add(buffer[i]);
-                        return data.ToArray();
+                        bytesRead += 6;
+                        break;
                     case (int)MessageType.Movement:
-                        for (int i = 0; i < 1 + (13 * amountPlayers); i++)
+                        for (int i = 0 + bytesRead; i < 1 + (13 * amountPlayers) + bytesRead; i++)
                             data.Add(buffer[i]);
-                        return data.ToArray();
+                        bytesRead += 2 + (13 * amountPlayers);
+                        break;
+                    case (int)MessageType.ServerSendsFired:
+                        for (int i = 0 + bytesRead; i < 15 + bytesRead; i++)
+                            data.Add(buffer[i]);
+                        bytesRead += 15;
+                        break;
                 }
                 
             }
             catch { }
-            return null;
-        }
-
-        public byte[] ReadProjectiles()
-        {
-            try
-            {
-                byte[] buffer = new byte[clientProjectiles.ReceiveBufferSize];
-                List<byte> data = new List<byte>();
-                clientProjectiles.GetStream().Read(buffer, 0, clientProjectiles.ReceiveBufferSize);
-                switch ((int)buffer[0])
-                {
-                    case (int)MessageType.ServerSendsFired:
-                        for (int i = 0; i < 15; i++)
-                            data.Add(buffer[i]);
-                        return data.ToArray();
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-            return null;
-        }
+            return data.ToArray();
+        }       
 
         [Obsolete]
         private string generateIP()
