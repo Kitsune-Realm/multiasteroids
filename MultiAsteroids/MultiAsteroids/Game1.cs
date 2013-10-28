@@ -38,7 +38,8 @@ namespace MultiAsteroids
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";            
+            Content.RootDirectory = "Content";
+            //this.TargetElapsedTime = TimeSpan.FromSeconds(1.0f / 100.0f);
         }
 
         /// <summary>
@@ -130,9 +131,9 @@ namespace MultiAsteroids
                 }
                 player.Transmit();
 
-                byte[] projectilesRead = player.clientComm.ReadProjectiles();
+                /*byte[] projectilesRead = player.clientComm.ReadProjectiles();
                 if (projectilesRead != null)
-                    Console.WriteLine("test");
+                    Console.WriteLine("test");*/
 
                 
                 updateProjectiles(gameTime);

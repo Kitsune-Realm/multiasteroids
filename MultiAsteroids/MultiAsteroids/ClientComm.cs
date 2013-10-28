@@ -25,14 +25,14 @@ namespace MultiAsteroids
             this.isListening = false;
             game.PlayerFired += new PlayerFiredHandler(game_PlayerFired);
 
-            clientProjectiles = new TcpClient("127.0.0.1", PortProjectiles);
+            clientProjectiles = new TcpClient("145.102.67.200", PortProjectiles);
             clientProjectiles.ReceiveTimeout = 1;
             clientProjectiles.SendTimeout = 1;
         }        
 
         public void StartListening()
         {
-            client = new TcpClient("127.0.0.1", Port);
+            client = new TcpClient("145.102.67.200", Port);
             client.ReceiveTimeout = 10;
             client.SendTimeout = 10;           
             this.isListening = true;

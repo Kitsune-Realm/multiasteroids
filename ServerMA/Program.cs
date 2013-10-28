@@ -60,9 +60,10 @@ namespace ServerMA
 
                 TcpClient clientProj = listenerProj.AcceptTcpClient();
                 this.clientsProjectiles.Add(clientProj);
-                Thread threadProj = new Thread(() => handleProjectilesThread(clientProj));
+               /* Thread threadProj = new Thread(() => handleProjectilesThread(clientProj));
                 threadProj.Name = "handling Projectiles";
                 threadProj.Start();
+                * */
             }
         }
 
