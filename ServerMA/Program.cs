@@ -17,9 +17,7 @@ namespace ServerMA
         //public event OnClientAddedHandler OnClientAdded;
 
         private static int port = 5938; // movement
-        private static int portProj = 5937; // projectiles
         private List<TcpClient> clients;
-        private List<TcpClient> clientsProjectiles;
         private int clientId;
         private int lobbyId;
         private Lobby lobby;    
@@ -34,7 +32,6 @@ namespace ServerMA
         {
             Console.WriteLine("Server for MultiAsteroids game");
             this.clients = new List<TcpClient>();
-            this.clientsProjectiles = new List<TcpClient>();
             this.clientId = 1;
             this.lobbyId = 1;
             lobby = new Lobby(lobbyId);
@@ -47,24 +44,22 @@ namespace ServerMA
 
             TcpListener listener = new TcpListener(ip, port);
             listener.Start();
-
-            TcpListener listenerProj = new TcpListener(ip, portProj);
-            listenerProj.Start();
-
+            
             while (true)
             {
                 TcpClient client = listener.AcceptTcpClient();
+                addToLog(client);
                 Thread thread = new Thread(() => handleClientThread(client));
                 thread.Name = "handling client";
                 thread.Start();
-
-                TcpClient clientProj = listenerProj.AcceptTcpClient();
-                this.clientsProjectiles.Add(clientProj);
-               /* Thread threadProj = new Thread(() => handleProjectilesThread(clientProj));
-                threadProj.Name = "handling Projectiles";
-                threadProj.Start();
-                * */
             }
+        }
+
+        private void addToLog(TcpClient client)
+        {
+            using (FileStream fileStream = new FileStream("log.txt", FileMode.OpenOrCreate, FileAccess.Write))
+            using (StreamWriter streamWriter = new StreamWriter(fileStream))
+                streamWriter.WriteLine(string.Format("<{0}> - Client {1}", DateTime.Now, client.ToString()));
         }
 
         private void handleClientThread(object obj)
@@ -72,7 +67,7 @@ namespace ServerMA
             TcpClient client = obj as TcpClient;
             StarshipClientData clientData = new StarshipClientData(clientId);
             bool running = true;
-            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();            
+            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
             updateLobby(clientData, clientIp);            
             this.clients.Add(client);                
@@ -134,7 +129,7 @@ namespace ServerMA
                         break;
                 }
 
-                foreach (TcpClient c in clientsProjectiles)
+                foreach (TcpClient c in clients)
                 {
                     if (c != client)
                     {
@@ -187,7 +182,12 @@ namespace ServerMA
                         lobby.GetPlayerInLobby(player).Update(FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));
                         Console.WriteLine("({0}) - X:{1} Y:{2} R:{3}", player, FloatUnion.BytesToFloat(xAs), FloatUnion.BytesToFloat(yAs), FloatUnion.BytesToFloat(rot));                                                
                     }
-                    break;                
+                    break; 
+                case (int)MessageType.PlayerFired:
+                    {
+                        Console.WriteLine("player shot");
+                    }
+                    break;
             }            
         }
 

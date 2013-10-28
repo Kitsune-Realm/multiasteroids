@@ -24,10 +24,6 @@ namespace MultiAsteroids
         {
             this.isListening = false;
             game.PlayerFired += new PlayerFiredHandler(game_PlayerFired);
-
-            clientProjectiles = new TcpClient("145.102.67.200", PortProjectiles);
-            clientProjectiles.ReceiveTimeout = 1;
-            clientProjectiles.SendTimeout = 1;
         }        
 
         public void StartListening()
@@ -66,7 +62,7 @@ namespace MultiAsteroids
             foreach (byte b in FloatUnion.FloatToBytes(projectile.RotationAngle))
                 data.Add(b);
 
-            this.clientProjectiles.GetStream().Write(data.ToArray(), 0, data.Count);
+            this.client.GetStream().Write(data.ToArray(), 0, data.Count);
         }
 
         public byte[] Read()
