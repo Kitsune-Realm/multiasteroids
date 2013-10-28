@@ -47,19 +47,18 @@ namespace ServerMA
             
             while (true)
             {
-                TcpClient client = listener.AcceptTcpClient();
-                addToLog(client);
+                TcpClient client = listener.AcceptTcpClient();                
                 Thread thread = new Thread(() => handleClientThread(client));
                 thread.Name = "handling client";
                 thread.Start();
             }
         }
 
-        private void addToLog(TcpClient client)
+        private void addToLog(string clientIp)
         {
-            using (FileStream fileStream = new FileStream("log.txt", FileMode.OpenOrCreate, FileAccess.Write))
+            using (FileStream fileStream = new FileStream("log.txt", FileMode.Append, FileAccess.Write))
             using (StreamWriter streamWriter = new StreamWriter(fileStream))
-                streamWriter.WriteLine(string.Format("<{0}> - Client {1}", DateTime.Now, client.ToString()));
+                streamWriter.WriteLine(string.Format("<{0}> - Client {1}", DateTime.Now, clientIp));
         }
 
         private void handleClientThread(object obj)
@@ -68,6 +67,8 @@ namespace ServerMA
             StarshipClientData clientData = new StarshipClientData(clientId);
             bool running = true;
             string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+
+            addToLog(clientIp);
 
             updateLobby(clientData, clientIp);            
             this.clients.Add(client);                
