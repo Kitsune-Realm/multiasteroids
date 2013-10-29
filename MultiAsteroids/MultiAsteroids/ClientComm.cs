@@ -64,8 +64,7 @@ namespace MultiAsteroids
         }
 
         public byte[] Read()
-        {
-            
+        {            
             byte[] buffer = new byte[client.ReceiveBufferSize]; // These buffers are humongeously huge... noob
             List<byte> data = new List<byte>();
             int bytesRead = 0;

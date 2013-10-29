@@ -42,6 +42,8 @@
   <ItemGroup>
     <Compile Include="FloatUnion.cs" />
     <Compile Include="MessageType.cs" />
+    <Compile Include="Packet.cs" />
+    <Compile Include="PacketPosition.cs" />
     <Compile Include="ProjectileData.cs" />
     <Compile Include="ProjectileType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
