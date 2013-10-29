@@ -26,7 +26,7 @@ namespace MultiAsteroids
 
         public void StartListening()
         {
-            client = new TcpClient("127.0.0.1", Port);
+            client = new TcpClient("145.102.67.200", Port);
             client.ReceiveTimeout = 10;
             client.SendTimeout = 10;           
             this.isListening = true;
