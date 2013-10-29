@@ -104,30 +104,33 @@ namespace MultiAsteroids
                 player.MovementUpdate();
                                               
                 byte[] read = player.clientComm.Read();               
-                switch (read[0])
+                if (read.Count() != 0 && read != null)
                 {
-                    case (int)MessageType.Movement:
-                        foreach (StarshipClientData scd in otherPlayers)
-                        {
-                            for (int i = 0; i <= otherPlayers.Count; i++)
+                    switch (read[0])
+                    {
+                        case (int)MessageType.Movement:
+                            foreach (StarshipClientData scd in otherPlayers)
                             {
-                                if (read[1 + (13 * i)] == scd.ID)
+                                for (int i = 0; i <= otherPlayers.Count; i++)
                                 {
-                                    scd.X = FloatUnion.BytesToFloat(read, 2 + (13 * i), 5 + (13 * i));
-                                    scd.Y = FloatUnion.BytesToFloat(read, 6 + (13 * i), 9 + (13 * i));
-                                    scd.Rotation = FloatUnion.BytesToFloat(read, 10 + (13 * i), 13 + (13 * i));
+                                    if (read[1 + (13 * i)] == scd.ID)
+                                    {
+                                        scd.X = FloatUnion.BytesToFloat(read, 2 + (13 * i), 5 + (13 * i));
+                                        scd.Y = FloatUnion.BytesToFloat(read, 6 + (13 * i), 9 + (13 * i));
+                                        scd.Rotation = FloatUnion.BytesToFloat(read, 10 + (13 * i), 13 + (13 * i));
+                                    }
                                 }
                             }
-                        }
-                        break;
-                    case (int)MessageType.ServerSendsFired:
-                        float X = FloatUnion.BytesToFloat(read, 1, 4);
-                        float Y = FloatUnion.BytesToFloat(read, 5, 8);
-                        float Rot = FloatUnion.BytesToFloat(read, 9, 12);
-                        Projectile proj = new Projectile(this.Content, read[1], X, Y, Rot);
-                        proj.IsAlive = true;
-                        otherProjectiles.Add(proj);
-                        break;
+                            break;
+                        case (int)MessageType.ServerSendsFired:
+                            float X = FloatUnion.BytesToFloat(read, 1, 4);
+                            float Y = FloatUnion.BytesToFloat(read, 5, 8);
+                            float Rot = FloatUnion.BytesToFloat(read, 9, 12);
+                            Projectile proj = new Projectile(this.Content, read[1], X, Y, Rot);
+                            proj.IsAlive = true;
+                            otherProjectiles.Add(proj);
+                            break;
+                    }
                 }
                 
                 player.Transmit();
