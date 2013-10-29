@@ -162,29 +162,32 @@ namespace MultiAsteroids
                 player.clientComm.client.GetStream().Write(readyData,0,3);
 
                 byte[] read = player.clientComm.Read();
-                if (read[0] == (int)MessageType.PlayerReadyStatus)
+                if (read.Count() != 0 && read != null)
                 {
-                    bool ready = true;
-                    for (int i = 2; i < read[1] + 2; i++)
+                    if (read[0] == (int)MessageType.PlayerReadyStatus)
                     {
-                        if (read[i] != 1)
-                            ready = false;
-                    }
-                    if (ready)
-                    {
-                        for (int i = 1; i <= read[1]; i++)
+                        bool ready = true;
+                        for (int i = 2; i < read[1] + 2; i++)
                         {
-                            if (i != this.player.PlayerNumber)
-                                this.otherPlayers.Add(new StarshipClientData(i));
+                            if (read[i] != 1)
+                                ready = false;
                         }
-                        this.player.clientComm.amountPlayers = otherPlayers.Count + 1;
-                        if (player.PlayerNumber == 1)
-                            player.UpdatePosition(111f, 111f, 2f);
-                        if (player.PlayerNumber == 2)
-                            player.UpdatePosition(374f, 246f, 4f);
-                        this.gameState = GameState.Playing;
+                        if (ready)
+                        {
+                            for (int i = 1; i <= read[1]; i++)
+                            {
+                                if (i != this.player.PlayerNumber)
+                                    this.otherPlayers.Add(new StarshipClientData(i));
+                            }
+                            this.player.clientComm.amountPlayers = otherPlayers.Count + 1;
+                            if (player.PlayerNumber == 1)
+                                player.UpdatePosition(111f, 111f, 2f);
+                            if (player.PlayerNumber == 2)
+                                player.UpdatePosition(374f, 246f, 4f);
+                            this.gameState = GameState.Playing;
+                        }
                     }
-                }                
+                }
             }
             base.Update(gameTime);
         }
