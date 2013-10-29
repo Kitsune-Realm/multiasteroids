@@ -103,7 +103,7 @@ namespace MultiAsteroids
                 determineKeyboardInput();
                 player.MovementUpdate();
                                               
-                byte[] read = player.clientComm.Read();
+                byte[] read = player.clientComm.Read();               
                 switch (read[0])
                 {
                     case (int)MessageType.Movement:

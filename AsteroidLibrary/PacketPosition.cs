@@ -12,12 +12,9 @@ namespace AsteroidLibrary
         public float Y { get; set; }
         public float Rot { get; set; }
 
-
         public override void Send(Socket socket)
-        {
-            
+        {            
         }
-
         public override byte[] convertToBytes()
         {
             List<byte> data = new List<byte>();
