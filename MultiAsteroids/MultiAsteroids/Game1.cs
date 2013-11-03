@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using AsteroidLibrary;
+using AsteroidLibrary.Packets;
 using System.Collections;
 
 namespace MultiAsteroids
@@ -52,6 +53,9 @@ namespace MultiAsteroids
         {            
             font = Content.Load<SpriteFont>("displayFont");            
             base.Initialize();
+
+            Packet pPos = new PacketPosition();
+            pPos.Send(null);
         }
 
         /// <summary>
@@ -149,45 +153,45 @@ namespace MultiAsteroids
             else if (this.gameState == GameState.Lobby)
             {
                 determineKeyboardInput();
-                if (!player.clientComm.isListening)                
-                    player.clientComm.StartListening();
-                if(player.PlayerNumber <= 0)
-                    player.AssignPlayerNumber();                
+                //if (!player.clientComm.isListening)                
+                //    player.clientComm.StartListening();
+                //if(player.PlayerNumber <= 0)
+                //    player.AssignPlayerNumber();                
                 
-                byte[] readyData = new byte[3];
-                readyData[0] = (int)MessageType.PlayerReadyStatus;
-                readyData[1] = (byte)player.getReadyStatus();
-                readyData[2] = (byte)player.PlayerNumber;
+                //byte[] readyData = new byte[3];
+                //readyData[0] = (int)MessageType.PlayerReadyStatus;
+                //readyData[1] = (byte)player.getReadyStatus();
+                //readyData[2] = (byte)player.PlayerNumber;
 
-                player.clientComm.client.GetStream().Write(readyData,0,3);
+                //player.clientComm.client.GetStream().Write(readyData,0,3);
 
-                byte[] read = player.clientComm.Read();
-                if (read.Count() != 0 && read != null)
-                {
-                    if (read[0] == (int)MessageType.PlayerReadyStatus)
-                    {
-                        bool ready = true;
-                        for (int i = 2; i < read[1] + 2; i++)
-                        {
-                            if (read[i] != 1)
-                                ready = false;
-                        }
-                        if (ready)
-                        {
-                            for (int i = 1; i <= read[1]; i++)
-                            {
-                                if (i != this.player.PlayerNumber)
-                                    this.otherPlayers.Add(new StarshipClientData(i));
-                            }
-                            this.player.clientComm.amountPlayers = otherPlayers.Count + 1;
-                            if (player.PlayerNumber == 1)
-                                player.UpdatePosition(111f, 111f, 2f);
-                            if (player.PlayerNumber == 2)
-                                player.UpdatePosition(374f, 246f, 4f);
-                            this.gameState = GameState.Playing;
-                        }
-                    }
-                }
+                //byte[] read = player.clientComm.Read();
+                //if (read.Count() != 0 && read != null)
+                //{
+                //    if (read[0] == (int)MessageType.PlayerReadyStatus)
+                //    {
+                //        bool ready = true;
+                //        for (int i = 2; i < read[1] + 2; i++)
+                //        {
+                //            if (read[i] != 1)
+                //                ready = false;
+                //        }
+                //        if (ready)
+                //        {
+                //            for (int i = 1; i <= read[1]; i++)
+                //            {
+                //                if (i != this.player.PlayerNumber)
+                //                    this.otherPlayers.Add(new StarshipClientData(i));
+                //            }
+                //            this.player.clientComm.amountPlayers = otherPlayers.Count + 1;
+                //            if (player.PlayerNumber == 1)
+                //                player.UpdatePosition(111f, 111f, 2f);
+                //            if (player.PlayerNumber == 2)
+                //                player.UpdatePosition(374f, 246f, 4f);
+                //            this.gameState = GameState.Playing;
+                //        }
+                //    }
+                //}
             }
             base.Update(gameTime);
         }
@@ -287,13 +291,18 @@ namespace MultiAsteroids
                 if (newState.IsKeyDown(Keys.Enter))
                     if (!oldState.IsKeyDown(Keys.Enter))
                     {
+                        PacketReady packet = new PacketReady(false, 1);
                         if (player.isReady)
                         {
+                            packet.Status = false;
+                            packet.Send(player.clientComm.socket);
                             player.isReady = false;
                             selectCursor.sfxSelect.Play();
                         }
                         else
                         {
+                            packet.Status = true;
+                            packet.Send(player.clientComm.socket);
                             player.isReady = true;
                             selectCursor.sfxSelect.Play();
                         }

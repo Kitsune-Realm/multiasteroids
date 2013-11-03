@@ -45,14 +45,22 @@ namespace ServerMA
                 Console.WriteLine("cannot parse this IP");
 
             TcpListener listener = new TcpListener(ip, port);
-            listener.Start();
-            
+            //listener.Start();
+
+            IPEndPoint localEP = new IPEndPoint(new IPAddress(0), 1234);
+            Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+            serverSocket.Bind(localEP);
+            serverSocket.Listen(10);                
+
             while (true)
             {
-                TcpClient client = listener.AcceptTcpClient();                
-                Thread thread = new Thread(() => handleClientThread(client));
-                thread.Name = "handling client";
-                thread.Start();
+                Socket clientSocket = serverSocket.Accept();
+                Console.WriteLine("new Client found");
+                ClientThread thread = new ClientThread(clientSocket);
+                //TcpClient client = listener.AcceptTcpClient();                
+                //Thread thread = new Thread(() => handleClientThread(client));
+                //thread.Name = "handling client";
+                //thread.Start();
             }
         }
 

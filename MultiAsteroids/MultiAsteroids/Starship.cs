@@ -75,7 +75,7 @@ namespace MultiAsteroids
         public void AssignPlayerNumber()
         {
             byte[] buffer = new byte[2];
-            this.clientComm.client.GetStream().Read(buffer, 0, buffer.Length);
+            //this.clientComm.client.GetStream().Read(buffer, 0, buffer.Length);
             if (buffer[0] == (int)MessageType.AddedClient)            
                 this.PlayerNumber = buffer[1];
         }

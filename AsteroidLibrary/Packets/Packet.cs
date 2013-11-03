@@ -4,13 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Net.Sockets;
 
-namespace AsteroidLibrary
+namespace AsteroidLibrary.Packets
 {
     public abstract class Packet
     {
         public int ID { get; set; }
-
-        public abstract void Send(Socket socket);
-        public abstract byte[] convertToBytes();
+        protected List<byte> data;
+        public abstract void Send(Socket socket);        
     }
 }

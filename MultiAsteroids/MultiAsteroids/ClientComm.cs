@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Net;
 using AsteroidLibrary;
+using AsteroidLibrary.Packets;
 using System.IO;
 
 namespace MultiAsteroids
@@ -14,23 +15,28 @@ namespace MultiAsteroids
     class ClientComm
     {
         public int Port = 5938;
-        public TcpClient client;        
-        public bool isListening { get; set; }
+        public TcpClient client;
+        public Socket socket;
         public int amountPlayers { get; set; }
 
         public ClientComm(Game1 game)
         {
-            this.isListening = false;
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+            socket.Connect("127.0.0.1", 1234);
             game.PlayerFired += new PlayerFiredHandler(game_PlayerFired);
         }        
 
         public void StartListening()
         {
-            client = new TcpClient("145.102.67.200", Port);
-            client.ReceiveTimeout = 10;
-            client.SendTimeout = 10;           
-            this.isListening = true;
-        }        
+            //client = new TcpClient("127.0.0.1", Port);
+            //client.ReceiveTimeout = 10;
+            //client.SendTimeout = 10;     
+        }
+
+        public void Send(Packet packet)
+        {
+            packet.Send(this.socket);
+        }
 
         public void Send(int playerNumber, float x, float y, float rotation)
         {

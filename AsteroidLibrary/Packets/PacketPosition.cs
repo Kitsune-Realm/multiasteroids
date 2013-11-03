@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Net.Sockets;
 
-namespace AsteroidLibrary
+namespace AsteroidLibrary.Packets
 {
     public class PacketPosition : Packet
     {
@@ -12,14 +12,14 @@ namespace AsteroidLibrary
         public float Y { get; set; }
         public float Rot { get; set; }
 
-        public override void Send(Socket socket)
-        {            
+        public PacketPosition()
+        {
+            this.ID = (int)MessageType.Movement;
         }
-        public override byte[] convertToBytes()
+
+        public override void Send(Socket socket)
         {
             List<byte> data = new List<byte>();
-
-            data.Add((byte)14); // size of this packet
 
             data.Add((byte)this.ID);
             foreach (byte b in BitConverter.GetBytes(X))
@@ -29,7 +29,8 @@ namespace AsteroidLibrary
             foreach (byte b in BitConverter.GetBytes(Rot))
                 data.Add(b);
 
-            return data.ToArray();
-        }       
+            // finally add the total size of the array as the First index
+            data.Insert(0, (byte)data.Count);
+        }      
     }
 }
